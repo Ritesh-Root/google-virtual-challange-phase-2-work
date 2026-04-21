@@ -1,0 +1,11 @@
+node_modules
+.env
+coverage
+.git
+.gitignore
+tests
+*.md
+.eslintrc.json
+.prettierrc
+.DS_Store
+*.log

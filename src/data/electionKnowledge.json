@@ -1,0 +1,143 @@
+{
+  "metadata": {
+    "jurisdiction": "India",
+    "governingBody": "Election Commission of India",
+    "source_url": "https://eci.gov.in",
+    "last_verified_on": "2026-04-21",
+    "version": "1.0.0",
+    "disclaimer": "Educational information only. Not legal advice."
+  },
+  "topics": {
+    "eligibility": {
+      "title": "🗳️ Voter Eligibility",
+      "summary": "Who can vote in Indian elections",
+      "rules": {
+        "minimumAge": 18,
+        "qualifyingDates": ["January 1", "April 1", "July 1", "October 1"],
+        "citizenship": "Must be an Indian citizen",
+        "residency": "Must be an ordinary resident of the constituency",
+        "disqualifications": [
+          "Non-citizen of India",
+          "Unsound mind (as declared by competent court)",
+          "Disqualified under any law related to corrupt practices"
+        ]
+      },
+      "source_url": "https://eci.gov.in/voter/voter-eligibility/",
+      "last_verified_on": "2026-04-21"
+    },
+    "registration": {
+      "title": "📋 Voter Registration",
+      "summary": "How to register as a voter in India",
+      "methods": {
+        "online": {
+          "portal": "voters.eci.gov.in",
+          "app": "Voter Helpline App",
+          "steps": [
+            "Visit voters.eci.gov.in or download the Voter Helpline App",
+            "Select 'New Voter Registration' and fill Form 6",
+            "Upload passport photo and supporting documents",
+            "Submit and note the reference number",
+            "Track status online using reference number",
+            "Booth Level Officer (BLO) may visit for verification",
+            "Once approved, name appears in electoral roll and EPIC is issued"
+          ]
+        },
+        "offline": {
+          "steps": [
+            "Obtain Form 6 from ERO/BLO office or download from eci.gov.in",
+            "Fill in personal details, address, and constituency",
+            "Attach self-attested copies of required documents",
+            "Submit to the Electoral Registration Officer (ERO)",
+            "Await BLO verification visit",
+            "Collect EPIC after approval"
+          ]
+        }
+      },
+      "forms": {
+        "Form 6": "New voter registration (Indian resident)",
+        "Form 6A": "Overseas (NRI) voter registration",
+        "Form 7": "Objection to inclusion / request for name deletion",
+        "Form 8": "Correction of entries / shifting of residence / replacement of EPIC"
+      },
+      "requiredDocuments": [
+        "Proof of Identity (Aadhaar, Passport, PAN, Driving License)",
+        "Proof of Age (Birth Certificate, School Leaving Certificate, Aadhaar)",
+        "Proof of Address (Aadhaar, Utility Bill, Bank Statement, Rent Agreement)",
+        "Recent passport-size photograph"
+      ],
+      "source_url": "https://voters.eci.gov.in",
+      "last_verified_on": "2026-04-21"
+    },
+    "election_timeline": {
+      "title": "📅 Election Timeline",
+      "summary": "The 9 phases of an Indian election",
+      "phases": [
+        { "step": 1, "name": "Schedule Announcement", "description": "ECI announces election dates. Model Code of Conduct takes immediate effect.", "typicalDuration": "Day 0" },
+        { "step": 2, "name": "Issue of Notification", "description": "Formal notification issued to commence electoral process.", "typicalDuration": "Within 2 weeks" },
+        { "step": 3, "name": "Nomination Filing", "description": "Candidates file nomination papers with the Returning Officer.", "typicalDuration": "7 days from notification" },
+        { "step": 4, "name": "Scrutiny of Nominations", "description": "Returning Officer examines nomination papers for validity.", "typicalDuration": "1 day after last nomination date" },
+        { "step": 5, "name": "Withdrawal", "description": "Candidates may withdraw their nomination.", "typicalDuration": "2 days after scrutiny" },
+        { "step": 6, "name": "Campaigning", "description": "Parties and candidates campaign publicly. Must end 48 hours before polling.", "typicalDuration": "~2-3 weeks" },
+        { "step": 7, "name": "Silence Period", "description": "No campaigning allowed. 48 hours before polling.", "typicalDuration": "48 hours" },
+        { "step": 8, "name": "Polling Day", "description": "Voters cast ballots at designated polling stations.", "typicalDuration": "1 day per phase (may be multi-phase)" },
+        { "step": 9, "name": "Counting & Results", "description": "Votes counted under supervision. Results declared same day.", "typicalDuration": "Usually 3-5 days after final phase" }
+      ],
+      "source_url": "https://eci.gov.in",
+      "last_verified_on": "2026-04-21"
+    },
+    "polling_booth": {
+      "title": "🏛️ Polling Day Process",
+      "summary": "Step-by-step: what happens when you vote",
+      "steps": [
+        { "step": 1, "name": "Arrive & Queue", "description": "Go to your designated polling station. Join the queue." },
+        { "step": 2, "name": "Identity Verification", "description": "Present your EPIC (Voter ID) or authorized photo ID to the First Polling Officer." },
+        { "step": 3, "name": "Register & Ink", "description": "Second Polling Officer verifies details, applies indelible ink to left index finger, takes signature/thumb impression on Form 17A." },
+        { "step": 4, "name": "Machine Authorization", "description": "Third Polling Officer checks ink mark and activates the EVM ballot unit for you." },
+        { "step": 5, "name": "Cast Vote", "description": "Enter the voting compartment. Press the blue button next to your chosen candidate on the Ballot Unit." },
+        { "step": 6, "name": "VVPAT Verification", "description": "VVPAT screen displays candidate name, symbol, and serial number for ~7 seconds. A beep confirms the vote is recorded." },
+        { "step": 7, "name": "Exit", "description": "Leave the polling station. Your democratic duty is complete! 🎉" }
+      ],
+      "acceptableIDs": [
+        "EPIC (Voter ID Card)",
+        "Aadhaar Card",
+        "Passport",
+        "Driving License",
+        "PAN Card",
+        "Service ID (Government/PSU)",
+        "Student ID (if issued by recognized institution)",
+        "MNREGA Job Card"
+      ],
+      "source_url": "https://eci.gov.in/voter/poll-day-guide/",
+      "last_verified_on": "2026-04-21"
+    },
+    "voter_rights": {
+      "title": "⚖️ Voter Rights",
+      "summary": "Your democratic rights as an Indian voter",
+      "rights": [
+        "Right to vote by secret ballot",
+        "Right to know criminal record, assets, and education of candidates (via ECI affidavits)",
+        "Right to use NOTA (None of the Above) to reject all candidates",
+        "Right to a voter slip showing booth details",
+        "Right to assistance if physically disabled (companion allowed)",
+        "Right to file complaints about electoral malpractice",
+        "Right to a free and fair election environment"
+      ],
+      "grievanceMechanisms": [
+        "National Grievance Portal: ngsp.in",
+        "Voter Helpline: 1950",
+        "cVIGIL App for real-time reporting of violations"
+      ],
+      "source_url": "https://eci.gov.in",
+      "last_verified_on": "2026-04-21"
+    }
+  },
+  "faq": [
+    { "question": "What is NOTA?", "answer": "NOTA (None of the Above) is an option on the EVM ballot unit that allows a voter to officially reject all contesting candidates. It was introduced by the Supreme Court in 2013.", "source_url": "https://eci.gov.in" },
+    { "question": "What is ECI?", "answer": "The Election Commission of India is an autonomous constitutional authority responsible for administering Union and State election processes. It was established on January 25, 1950.", "source_url": "https://eci.gov.in/about-eci/" },
+    { "question": "What is the Model Code of Conduct?", "answer": "The MCC is a set of guidelines issued by the ECI for political parties and candidates during elections. It comes into force from the date the election schedule is announced and remains in effect until results are declared.", "source_url": "https://eci.gov.in" },
+    { "question": "What is an EVM?", "answer": "An Electronic Voting Machine is a portable device used for casting and counting votes. It consists of a Control Unit and a Ballot Unit, and is paired with a VVPAT for vote verification.", "source_url": "https://eci.gov.in" },
+    { "question": "What is VVPAT?", "answer": "Voter Verifiable Paper Audit Trail is a device attached to EVMs that prints a paper slip showing the candidate's name and symbol, allowing the voter to verify their vote before it is stored.", "source_url": "https://eci.gov.in" },
+    { "question": "What is a Booth Level Officer?", "answer": "A BLO is an official appointed by the ERO for each polling booth area. Their role is to update the electoral roll, verify new registrations, and assist voters in their jurisdiction.", "source_url": "https://eci.gov.in" },
+    { "question": "What is EPIC?", "answer": "Electors Photo Identity Card (EPIC), commonly known as Voter ID Card, is the primary identity document issued to registered voters by the Election Commission of India.", "source_url": "https://eci.gov.in" }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "electionguide-ai",
+  "version": "1.0.0",
+  "description": "Interactive AI assistant for understanding the Indian election process, powered by Google Gemini",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --forceExit --detectOpenHandles",
+    "test:coverage": "jest --forceExit --detectOpenHandles --coverage",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
+    "format": "prettier --write 'src/**/*.js' 'tests/**/*.js'"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFiles": ["./tests/setup.js"],
+    "coverageDirectory": "coverage",
+    "coverageThreshold": {
+      "global": {
+        "branches": 75,
+        "functions": 85,
+        "lines": 85,
+        "statements": 85
+      }
+    },
+    "testPathIgnorePatterns": ["/node_modules/"],
+    "coveragePathIgnorePatterns": ["/node_modules/", "/tests/"]
+  },
+  "keywords": ["election", "education", "ai", "gemini", "india"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "joi": "^18.1.2"
+  },
+  "devDependencies": {
+    "eslint": "^10.2.1",
+    "jest": "^30.3.0",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.8.3",
+    "supertest": "^7.2.2"
+  }
+}

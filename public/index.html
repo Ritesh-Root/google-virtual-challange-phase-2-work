@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-contrast="normal">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ElectionGuide AI - Interactive assistant for understanding the Indian election process, voter registration, timelines, and polling procedures.">
+  <meta name="theme-color" content="#0D1117">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="ElectionGuide AI - Election Process Education">
+  <meta property="og:description" content="Learn about the Indian election process with an interactive AI assistant powered by Google Gemini">
+  <meta property="og:type" content="website">
+  <title>ElectionGuide AI — Election Process Education</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+</head>
+<body>
+  <a href="#main-content" class="skip-link" id="skip-link">Skip to main content</a>
+
+  <header role="banner" id="site-header">
+    <div class="header-left">
+      <span class="logo" aria-hidden="true">🗳️</span>
+      <h1 class="header-title">ElectionGuide AI</h1>
+    </div>
+    <div class="header-controls" id="header-controls">
+      <div class="control-group">
+        <label for="lang-select" class="sr-only">Language</label>
+        <select id="lang-select" aria-label="Select language" class="control-select">
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="detail-select" class="sr-only">Detail level</label>
+        <select id="detail-select" aria-label="Select detail level" class="control-select">
+          <option value="simple">Simple</option>
+          <option value="standard" selected>Standard</option>
+          <option value="detailed">Detailed</option>
+        </select>
+      </div>
+      <div class="a11y-controls">
+        <button id="font-decrease" aria-label="Decrease font size" class="a11y-btn" title="Decrease font size">A-</button>
+        <button id="font-increase" aria-label="Increase font size" class="a11y-btn" title="Increase font size">A+</button>
+        <button id="contrast-toggle" aria-label="Toggle high contrast mode" class="a11y-btn" title="Toggle contrast">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" role="main">
+    <section class="hero" id="hero-section">
+      <p class="hero-subtitle">Your trusted guide to the Indian election process 🇮🇳</p>
+      <div class="quick-start" id="quick-start" aria-label="Quick start questions">
+        <button class="quick-btn" data-message="Am I eligible to vote?" id="qs-eligible">🗳️ Am I eligible?</button>
+        <button class="quick-btn" data-message="How do I register to vote?" id="qs-register">📋 How to register?</button>
+        <button class="quick-btn" data-message="Show me the election timeline" id="qs-timeline">📅 Election timeline</button>
+        <button class="quick-btn" data-message="Remind me of election dates" id="qs-remind">⏰ Set reminders</button>
+      </div>
+    </section>
+
+    <section class="topics-section" id="topics-section" aria-label="Election topics">
+      <h2 class="section-title">📚 Explore Election Topics</h2>
+      <div class="topic-grid" id="topic-grid"></div>
+    </section>
+
+    <section class="chat-section" id="chat-section" aria-label="Chat with ElectionGuide AI">
+      <h2 class="section-title">💬 Ask ElectionGuide AI</h2>
+      <div class="chat-container" id="chat-container">
+        <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+        <div class="chat-input-area">
+          <form id="chat-form" aria-label="Send a message">
+            <input type="text" id="chat-input" placeholder="Ask about elections..." 
+                   aria-label="Type your question about the election process" maxlength="500" autocomplete="off">
+            <button type="submit" id="chat-send" aria-label="Send message">
+              <span class="send-icon">➤</span>
+            </button>
+          </form>
+          <p class="chat-hint" id="chat-hint">Press Enter to send • Ctrl+/ to focus</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="calendar-section" id="calendar-section" aria-label="Election reminders" style="display:none;">
+      <h2 class="section-title">📅 Election Reminders</h2>
+      <div id="calendar-links" class="calendar-links"></div>
+      <div id="map-link-container" class="map-link-container"></div>
+    </section>
+  </main>
+
+  <footer role="contentinfo" id="site-footer">
+    <div class="footer-content">
+      <p>Data source: <a href="https://eci.gov.in" target="_blank" rel="noopener noreferrer">Election Commission of India</a></p>
+      <p class="disclaimer">⚠️ Educational information only. Not legal advice. For official guidance, visit <a href="https://eci.gov.in" target="_blank" rel="noopener noreferrer">eci.gov.in</a></p>
+      <p class="powered-by">Powered by <strong>Google Gemini AI</strong> • Deployed on <strong>Google Cloud Run</strong></p>
+    </div>
+  </footer>
+
+  <div id="sr-announcements" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/chat.js"></script>
+</body>
+</html>
