@@ -20,7 +20,7 @@ const chatSchema = Joi.object({
       'string.empty': 'Message cannot be empty',
       'any.required': 'Message is required',
     }),
-  sessionId: Joi.string().max(LIMITS.MAX_SESSION_ID_LENGTH).optional(),
+  sessionId: Joi.string().max(LIMITS.MAX_SESSION_ID_LENGTH).optional().allow(null, ''),
   language: Joi.string().valid('en', 'hi').default('en'),
   detailLevel: Joi.string().valid('simple', 'standard', 'detailed').default('standard'),
 });
