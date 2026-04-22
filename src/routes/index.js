@@ -16,21 +16,22 @@ const router = Router();
 
 /**
  * POST /api/v1/chat — Main conversational endpoint.
- * Implements the full decision pipeline:
- * Sanitize → Intent → Slots → Missing check → Knowledge → Checklist → Gemini → Safety
+ * Implements the full hybrid decision pipeline:
+ * Sanitize → Intent (deterministic) → Slots → Missing check → Knowledge → Checklist
+ * → Gemini (wording) → Safety → [LLM classify fallback if unsupported] → Response
  */
 router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
   try {
     const { message, sessionId, language, detailLevel } = req.validatedBody;
 
-    // 1. Safety: check for prompt injection
+    // 1. Safety: check for prompt injection (Layer 1 — regex pre-filter)
     const injectionCheck = safetyFilter.detectInjection(message);
     if (injectionCheck.isInjection) {
       const session = contextManager.getOrCreate(sessionId);
       return res.json({
         success: true,
         data: {
-          answer_summary: '🗳️ ' + injectionCheck.sanitizedMessage,
+          answer_summary: '\uD83D\uDDF3\uFE0F ' + injectionCheck.sanitizedMessage,
           detailed_explanation: 'I can help you learn about the election process in India. Try asking about voter registration, the election timeline, or what happens on polling day.',
           next_3_actions: ['Ask about voter eligibility', 'Learn the election timeline', 'Understand the voting process'],
           deadlines: [],
@@ -50,7 +51,7 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
       return res.json({
         success: true,
         data: {
-          answer_summary: '🏛️ ' + politicalCheck.redirectMessage,
+          answer_summary: '\uD83C\uDFDB\uFE0F ' + politicalCheck.redirectMessage,
           detailed_explanation: null,
           next_3_actions: null,
           deadlines: [],
@@ -63,7 +64,7 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
       });
     }
 
-    // 3. Classify intent (deterministic)
+    // 3. Classify intent (deterministic — regex pattern matching)
     const { intent } = intentRouter.classify(message);
 
     // 4. Get/create session and update context from message
@@ -81,8 +82,8 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
       return res.json({
         success: true,
         data: {
-          answer_summary: '🗳️ Welcome to ElectionGuide AI! I\'m here to help you understand the Indian election process.',
-          detailed_explanation: 'I can help you with:\n\n- **Voter eligibility** — check if you can vote\n- **Registration** — step-by-step guide to register\n- **Election timeline** — all 9 phases explained\n- **Polling day** — what happens at the booth\n- **Required documents** — what to bring\n- **Calendar reminders** — never miss a deadline\n\nJust ask me anything about elections! 🇮🇳',
+          answer_summary: '\uD83D\uDDF3\uFE0F Welcome to ElectionGuide AI! I\'m here to help you understand the Indian election process.',
+          detailed_explanation: 'I can help you with:\n\n- **Voter eligibility** \u2014 check if you can vote\n- **Registration** \u2014 step-by-step guide to register\n- **Election timeline** \u2014 all 9 phases explained\n- **Polling day** \u2014 what happens at the booth\n- **Required documents** \u2014 what to bring\n- **Calendar reminders** \u2014 never miss a deadline\n\nJust ask me anything about elections! \uD83C\uDDEE\uD83C\uDDF3',
           next_3_actions: ['Check your voter eligibility', 'Learn how to register to vote', 'View the election timeline'],
           deadlines: [],
           sources: [{ title: 'Election Commission of India', url: 'https://eci.gov.in' }],
@@ -120,12 +121,12 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
       return res.json({ success: true, data: cachedResponse, sessionId: session.sessionId, cached: true });
     }
 
-    // 8. Handle calendar intent specially
+    // 8. Handle calendar intent specially (Google Calendar + Maps deep links)
     if (intent === INTENTS.CALENDAR) {
       const reminders = calendarService.generateElectionReminders(slots);
       const mapLink = calendarService.generatePollingBoothMapLink(slots.location?.state);
       const calendarResponse = {
-        answer_summary: '📅 Here are your election reminder links! Click any to add to your Google Calendar.',
+        answer_summary: '\uD83D\uDCC5 Here are your election reminder links! Click any to add to your Google Calendar.',
         detailed_explanation: 'I\'ve prepared calendar events for key election milestones. Click the links below to add them directly to your Google Calendar. You can also find your nearest polling booth on Google Maps.',
         next_3_actions: [
           'Click a reminder link below to add to Google Calendar',
@@ -158,9 +159,9 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
       sources: knowledge.sources,
     };
 
-    // 10. Handle unsupported intent with graceful fallback
+    // 10. Handle unsupported intent with HYBRID fallback engine
     if (intent === INTENTS.UNSUPPORTED) {
-      // Try FAQ search as last resort
+      // Attempt 1: FAQ keyword search
       const faqResult = knowledgeService.searchFAQ(message);
       if (faqResult) {
         const faqData = { ...faqResult, sources: [{ title: 'ECI FAQ', url: faqResult.source_url }] };
@@ -170,10 +171,46 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
         return res.json({ success: true, data: safeResponse, sessionId: session.sessionId });
       }
 
+      // Attempt 2: LLM fallback classification (hybrid engine)
+      // If deterministic regex couldn't classify, ask Gemini to try.
+      // Handles complex, multi-part, or unusual election-related queries.
+      const llmClassification = await geminiService.classifyIntent(message);
+      if (llmClassification.intent !== INTENTS.UNSUPPORTED && llmClassification.confidence !== 'low') {
+        console.log(JSON.stringify({
+          event: 'hybrid_fallback',
+          originalIntent: 'unsupported',
+          llmIntent: llmClassification.intent,
+          confidence: llmClassification.confidence,
+        }));
+
+        // Re-process with LLM-classified intent
+        const llmKnowledge = knowledgeService.retrieve(llmClassification.intent, slots);
+        let llmChecklist = null;
+        if (llmClassification.intent === INTENTS.ELIGIBILITY || llmClassification.intent === INTENTS.REGISTRATION) {
+          llmChecklist = checklistGenerator.generate(slots);
+        } else if (llmClassification.intent === INTENTS.TIMELINE) {
+          llmChecklist = checklistGenerator.generateTimeline(slots.electionType);
+        }
+
+        const llmStructuredData = {
+          ...llmKnowledge.data,
+          checklist: llmChecklist,
+          sources: llmKnowledge.sources,
+        };
+
+        const llmResponse = await geminiService.generateResponse(
+          llmClassification.intent, slots, llmStructuredData, message
+        );
+        const safeLlmResponse = safetyFilter.filter(llmResponse);
+        cacheService.set(cacheKey, safeLlmResponse);
+        return res.json({ success: true, data: safeLlmResponse, sessionId: session.sessionId });
+      }
+
+      // Final fallback: static boundary response
       return res.json({
         success: true,
         data: {
-          answer_summary: '🏛️ I specialize in Indian election education. I can help with voter registration, election timelines, polling day processes, and more.',
+          answer_summary: '\uD83C\uDFDB\uFE0F I specialize in Indian election education. I can help with voter registration, election timelines, polling day processes, and more.',
           detailed_explanation: 'Currently, I cover elections governed by the Election Commission of India (ECI). For topics outside Indian elections, please consult the relevant authority in your region.\n\nHere\'s what I can help you with:\n- Voter eligibility and registration\n- Election timeline and phases\n- Polling day process\n- Required documents\n- Your rights as a voter\n- Setting calendar reminders',
           next_3_actions: ['Ask about voter eligibility', 'Learn the election process', 'View required documents for voting'],
           deadlines: [],
@@ -189,7 +226,7 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
     // 11. Generate Gemini response (LLM wording pass on structured data)
     const response = await geminiService.generateResponse(intent, slots, structuredData, message);
 
-    // 12. Apply safety filter
+    // 12. Apply safety filter (Layer 3 — output sanitization)
     const safeResponse = safetyFilter.filter(response);
 
     // 13. Translate if language is not English

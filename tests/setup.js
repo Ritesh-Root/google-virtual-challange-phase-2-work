@@ -27,12 +27,61 @@ jest.mock('@google/generative-ai', () => {
     },
   });
 
+  // Classifier mock — returns 'faq' intent for election-related, 'unsupported' for unrelated
+  const mockClassifierContent = jest.fn().mockImplementation((prompt) => {
+    const lower = (typeof prompt === 'string' ? prompt : '').toLowerCase();
+    if (lower.includes('pizza') || lower.includes('weather') || lower.includes('cat')) {
+      return Promise.resolve({
+        response: {
+          text: () => JSON.stringify({
+            intent: 'unsupported',
+            confidence: 'high',
+            reasoning: 'Not related to elections',
+          }),
+        },
+      });
+    }
+    return Promise.resolve({
+      response: {
+        text: () => JSON.stringify({
+          intent: 'faq',
+          confidence: 'medium',
+          reasoning: 'Related to election education',
+        }),
+      },
+    });
+  });
+
+  // Translation mock — returns prefixed text
+  const mockTranslationContent = jest.fn().mockImplementation((prompt) => {
+    return Promise.resolve({
+      response: {
+        text: () => '[Translated] Test translation output',
+      },
+    });
+  });
+
   return {
     GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
-      getGenerativeModel: jest.fn().mockReturnValue({
-        generateContent: mockGenerateContent,
+      getGenerativeModel: jest.fn().mockImplementation((config) => {
+        // If it has a responseSchema with 'intent' property, it's the classifier
+        if (config.generationConfig?.responseSchema?.properties?.intent) {
+          return { generateContent: mockClassifierContent };
+        }
+        // If it has responseMimeType: 'application/json', it's the chat model
+        if (config.generationConfig?.responseMimeType === 'application/json') {
+          return { generateContent: mockGenerateContent };
+        }
+        // Otherwise it's the translation model
+        return { generateContent: mockTranslationContent };
       }),
     })),
+    SchemaType: {
+      OBJECT: 'OBJECT',
+      STRING: 'STRING',
+      ARRAY: 'ARRAY',
+      INTEGER: 'INTEGER',
+    },
   };
 });
 

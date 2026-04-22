@@ -1,32 +1,66 @@
 'use strict';
 
 /**
- * Post-processing safety and compliance filter.
- * Applied to EVERY response before returning to user.
+ * Defense-in-depth safety and compliance filter.
+ * 3-Layer Security Architecture:
+ *   Layer 1 (this): Deterministic regex pre-filter — fast, no API cost
+ *   Layer 2: Gemini SafetySettings — BLOCK_LOW_AND_ABOVE on all categories
+ *   Layer 3 (this): Output sanitization — XSS, source validation, disclaimers
+ *
+ * Applied to EVERY request (input) and response (output).
  * @class SafetyFilter
  */
 class SafetyFilter {
   constructor() {
-    /** @private Patterns indicating prompt injection attempts. */
+    /**
+     * @private Patterns indicating prompt injection attempts.
+     * Covers: English attacks, encoded attacks, role-play attacks, instruction override.
+     */
     this.injectionPatterns = [
-      /ignore (previous|all|above) instructions/i,
+      // Direct instruction override
+      /ignore (previous|all|above|prior|system) instructions/i,
+      /disregard (your|all|previous) (rules|instructions|guidelines)/i,
       /system prompt/i,
+      /reveal your/i,
+      /show (me|your) (prompt|instructions|system|config)/i,
+      // Role-play / persona attacks
       /you are now/i,
       /act as/i,
       /pretend (to|you)/i,
-      /reveal your/i,
       /\bDAN\b/,
+      /jailbreak/i,
+      /bypass/i,
+      /unrestricted mode/i,
+      // Code injection
       /<script/i,
       /javascript:/i,
+      /on\w+\s*=/i,
+      // Override / manipulation
       /override/i,
+      /new instructions/i,
+      /forget (everything|your|all)/i,
+      // Encoding-based bypass attempts
+      /&#x[0-9a-f]+;/i,         // HTML hex entities
+      /&#\d+;/i,                  // HTML decimal entities
+      /\\u[0-9a-f]{4}/i,         // Unicode escapes
+      /base64/i,                  // Base64 injection hints
+      /eval\s*\(/i,              // Code execution attempt
+      // Multi-language injection (Hindi)
+      /पिछले निर्देश/i,           // "previous instructions" in Hindi
+      /सिस्टम प्रॉम्प्ट/i,         // "system prompt" in Hindi
     ];
 
-    /** @private Patterns indicating political bias requests. */
+    /**
+     * @private Patterns indicating political bias requests.
+     * Covers party names, candidate endorsements, election predictions.
+     */
     this.politicalPatterns = [
       /vote for\s+\w+/i,
       /best (party|candidate)/i,
       /who (should|will) win/i,
-      /\b(bjp|congress|aap|tmc|bsp|sp|ncp|shiv sena|jdu|rjd|dmk|aiadmk)\b/i,
+      /which party/i,
+      /support (which|what) (party|candidate)/i,
+      /\b(bjp|congress|aap|tmc|bsp|sp|ncp|shiv sena|jdu|rjd|dmk|aiadmk|cpim|cpi|ysrcp|brs|jmm)\b/i,
     ];
   }
 
@@ -63,17 +97,24 @@ class SafetyFilter {
 
   /**
    * Check if a user message contains prompt injection attempts.
+   * This is Layer 1 of the defense-in-depth strategy.
+   * Layer 2 (Gemini SafetySettings) provides additional protection at the model level.
+   *
    * @param {string} message - Raw user message
-   * @returns {{ isInjection: boolean, sanitizedMessage: string }}
+   * @returns {{ isInjection: boolean, sanitizedMessage: string, matchedPattern: string|null }}
    */
   detectInjection(message) {
     const normalized = (message || '').trim();
     for (const pattern of this.injectionPatterns) {
       if (pattern.test(normalized)) {
-        return { isInjection: true, sanitizedMessage: 'How can I help you learn about elections?' };
+        return {
+          isInjection: true,
+          sanitizedMessage: 'How can I help you learn about elections?',
+          matchedPattern: pattern.toString(),
+        };
       }
     }
-    return { isInjection: false, sanitizedMessage: normalized };
+    return { isInjection: false, sanitizedMessage: normalized, matchedPattern: null };
   }
 
   /**
@@ -94,7 +135,11 @@ class SafetyFilter {
     return { isPolitical: false, redirectMessage: null };
   }
 
-  /** @private Remove HTML tags and script-related content. */
+  /**
+   * Remove HTML tags and script-related content.
+   * Layer 3 of defense-in-depth — sanitizes ALL output before returning to user.
+   * @private
+   */
   _sanitizeHtml(text) {
     if (typeof text !== 'string') {
       return '';

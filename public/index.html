@@ -71,7 +71,7 @@
         <div class="chat-input-area">
           <form id="chat-form" aria-label="Send a message">
             <input type="text" id="chat-input" placeholder="Ask about elections..." 
-                   aria-label="Type your question about the election process" maxlength="500" autocomplete="off">
+                   aria-label="Type your question about the election process" aria-describedby="chat-hint" maxlength="500" autocomplete="off">
             <button type="submit" id="chat-send" aria-label="Send message">
               <span class="send-icon">➤</span>
             </button>
@@ -96,7 +96,8 @@
     </div>
   </footer>
 
-  <div id="sr-announcements" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
+  <div id="sr-announcements" aria-live="assertive" aria-atomic="true" role="status" class="sr-only"></div>
+  <div id="loading-status" aria-live="polite" role="status" class="sr-only"></div>
 
   <script src="/js/app.js"></script>
   <script src="/js/chat.js"></script>

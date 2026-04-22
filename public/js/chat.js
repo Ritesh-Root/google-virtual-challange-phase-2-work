@@ -65,6 +65,10 @@
     chatInput.value = '';
     isLoading = true;
 
+    // Accessibility: announce loading state
+    if (chatMessages) { chatMessages.setAttribute('aria-busy', 'true'); }
+    announceLoading('ElectionGuide AI is thinking...');
+
     // Show typing indicator
     var typingEl = showTyping();
 
@@ -86,6 +90,8 @@
       .then(function (data) {
         removeTyping(typingEl);
         isLoading = false;
+        if (chatMessages) { chatMessages.setAttribute('aria-busy', 'false'); }
+        announceLoading('');
 
         if (data.success) {
           sessionId = data.sessionId;
@@ -98,6 +104,8 @@
       .catch(function (err) {
         removeTyping(typingEl);
         isLoading = false;
+        if (chatMessages) { chatMessages.setAttribute('aria-busy', 'false'); }
+        announceLoading('');
         addErrorMessage('Network error. Please check your connection.');
         console.error('Chat error:', err);
       });
@@ -211,6 +219,10 @@
     chatMessages.appendChild(div);
     scrollToBottom();
 
+    // Accessibility: focus management — move focus to new response
+    div.setAttribute('tabindex', '-1');
+    div.focus({ preventScroll: true });
+
     // Screen reader announcement
     if (window.ElectionApp) {
       window.ElectionApp.announce('Response received from ElectionGuide AI');
@@ -267,6 +279,14 @@
   }
 
   // ===== Utilities =====
+
+  /** Announce loading state to screen readers via the dedicated loading-status element. */
+  function announceLoading(text) {
+    var loadingStatus = document.getElementById('loading-status');
+    if (loadingStatus) {
+      loadingStatus.textContent = text;
+    }
+  }
 
   function scrollToBottom() {
     if (chatMessages) {
