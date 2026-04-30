@@ -91,4 +91,17 @@ describe('Health Routes', () => {
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['content-security-policy']).toBeDefined();
   });
+
+  test('GET /api/v1/quality-scorecard — exposes rubric-aligned evidence', async () => {
+    const res = await request(app).get('/api/v1/quality-scorecard').expect(200);
+    const criteria = res.body.data.criteria.map((item) => item.key);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.schemaVersion).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(res.body.data.generatedAt).toBeUndefined();
+    expect(criteria).toEqual(
+      expect.arrayContaining(['code_quality', 'security', 'efficiency', 'testing', 'accessibility', 'google_services'])
+    );
+    expect(res.body.data.safeToExpose).toBe(true);
+  });
 });

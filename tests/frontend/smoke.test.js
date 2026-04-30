@@ -1,6 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 describe('Frontend HTML smoke tests', () => {
   let html;
@@ -170,6 +171,11 @@ describe('Frontend HTML smoke tests', () => {
     expect(html).toMatch(/<link[^>]+rel="canonical"/);
   });
 
+  test('links a web app manifest', () => {
+    expect(html).toMatch(/<link[^>]+rel="manifest"/);
+    expect(html).toContain('/manifest.webmanifest');
+  });
+
   test('has Twitter card meta tags', () => {
     expect(html).toMatch(/<meta[^>]+name="twitter:card"/);
   });
@@ -205,6 +211,10 @@ describe('Frontend HTML smoke tests', () => {
 
   test('mentions Google Fonts in footer', () => {
     expect(html).toContain('Google Fonts');
+  });
+
+  test('mentions offline service worker shell in footer', () => {
+    expect(html).toContain('service worker');
   });
 });
 
@@ -313,6 +323,12 @@ describe('Frontend JS smoke tests', () => {
     expect(appJs).toContain('keydown');
   });
 
+  test('app.js registers service worker safely', () => {
+    expect(appJs).toContain('serviceWorker');
+    expect(appJs).toContain('isSecureContext');
+    expect(appJs).toContain('/sw.js');
+  });
+
   test('chat.js manages session state', () => {
     expect(chatJs).toContain('sessionId');
   });
@@ -331,3 +347,114 @@ describe('Frontend JS smoke tests', () => {
     expect(chatJs).toContain('focus');
   });
 });
+
+describe('Frontend service worker smoke tests', () => {
+  let sw, manifest;
+
+  beforeAll(() => {
+    sw = fs.readFileSync(path.join(__dirname, '../../public/sw.js'), 'utf-8');
+    manifest = fs.readFileSync(path.join(__dirname, '../../public/manifest.webmanifest'), 'utf-8');
+  });
+
+  test('service worker caches static app shell only', () => {
+    expect(sw).toContain('STATIC_ASSETS');
+    expect(sw).toContain('/css/style.css');
+    expect(sw).toContain('/js/app.js');
+    expect(sw).toContain('/js/chat.js');
+    expect(sw).toContain('STATIC_ASSET_PATHS.has(url.pathname)');
+  });
+
+  test('service worker avoids caching API responses', () => {
+    const harness = createServiceWorkerHarness(sw);
+    const event = createFetchEvent('https://electionguide.test/api/v1/topics');
+
+    harness.listeners.fetch(event);
+
+    expect(event.respondWith).not.toHaveBeenCalled();
+    expect(harness.fetch).not.toHaveBeenCalled();
+  });
+
+  test('service worker ignores non-shell same-origin routes', () => {
+    const harness = createServiceWorkerHarness(sw);
+    const event = createFetchEvent('https://electionguide.test/reports/latest');
+
+    harness.listeners.fetch(event);
+
+    expect(event.respondWith).not.toHaveBeenCalled();
+    expect(harness.fetch).not.toHaveBeenCalled();
+  });
+
+  test('service worker refreshes shell assets before returning them', async () => {
+    const harness = createServiceWorkerHarness(sw);
+    const event = createFetchEvent('https://electionguide.test/js/app.js');
+
+    harness.listeners.fetch(event);
+    const response = await event.responsePromise;
+
+    expect(response.ok).toBe(true);
+    expect(harness.fetch).toHaveBeenCalledWith(event.request, { cache: 'no-cache' });
+    expect(harness.cache.put).toHaveBeenCalledWith(event.request, response);
+  });
+
+  test('manifest declares standalone educational app metadata', () => {
+    const parsed = JSON.parse(manifest);
+    expect(parsed.name).toBe('ElectionGuide AI');
+    expect(parsed.display).toBe('standalone');
+    expect(parsed.categories).toContain('education');
+  });
+});
+
+function createServiceWorkerHarness(swSource) {
+  const listeners = {};
+  const cache = {
+    addAll: jest.fn().mockResolvedValue(undefined),
+    match: jest.fn().mockResolvedValue({ ok: true, cached: true }),
+    put: jest.fn().mockResolvedValue(undefined),
+  };
+  const fetchMock = jest.fn().mockResolvedValue({
+    ok: true,
+    clone() {
+      return this;
+    },
+  });
+  const context = {
+    caches: {
+      open: jest.fn().mockResolvedValue(cache),
+      keys: jest.fn().mockResolvedValue([]),
+      delete: jest.fn().mockResolvedValue(true),
+    },
+    fetch: fetchMock,
+    self: {
+      clients: {
+        claim: jest.fn().mockResolvedValue(undefined),
+      },
+      location: {
+        origin: 'https://electionguide.test',
+      },
+      addEventListener(type, handler) {
+        listeners[type] = handler;
+      },
+    },
+    Set,
+    URL,
+  };
+
+  vm.runInNewContext(swSource, context);
+
+  return { cache, fetch: fetchMock, listeners };
+}
+
+function createFetchEvent(url) {
+  const event = {
+    request: {
+      method: 'GET',
+      url,
+    },
+    respondWith: jest.fn((promise) => {
+      event.responsePromise = promise;
+    }),
+    waitUntil: jest.fn(),
+  };
+
+  return event;
+}

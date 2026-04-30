@@ -1,0 +1,20 @@
+{
+  "name": "ElectionGuide AI",
+  "short_name": "ElectionGuide",
+  "description": "Interactive Indian election process education powered by Google Gemini.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0D1117",
+  "orientation": "portrait-primary",
+  "categories": ["education", "government", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

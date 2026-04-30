@@ -194,7 +194,9 @@
     // Detailed explanation (expandable)
     if (data.detailed_explanation) {
       html +=
-        '<details style="margin-top: 12px;"><summary style="cursor:pointer; color: var(--primary); font-weight: 500;">📖 View detailed explanation</summary>' +
+        '<details style="margin-top: 12px;">' +
+        '<summary style="cursor:pointer; color: var(--primary); font-weight: 500;">' +
+        '📖 View detailed explanation</summary>' +
         '<div style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">' +
         formatMarkdown(data.detailed_explanation) +
         '</div></details>';

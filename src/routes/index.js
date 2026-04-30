@@ -8,6 +8,7 @@ const knowledgeService = require('../services/knowledgeService');
 const geminiService = require('../services/geminiService');
 const calendarService = require('../services/calendarService');
 const readinessAssessor = require('../services/readinessAssessor');
+const qualityScorecard = require('../services/qualityScorecard');
 const safetyFilter = require('../services/safetyFilter');
 const cacheService = require('../services/cacheService');
 const { NotFoundError } = require('../utils/errors');
@@ -441,6 +442,18 @@ router.post('/api/v1/calendar/reminders', validate(calendarSchema), (req, res) =
   const reminders = calendarService.generateElectionReminders(context);
   const mapLink = calendarService.generatePollingBoothMapLink(state);
   res.json({ success: true, data: { reminders, mapLink } });
+});
+
+/**
+ * GET /api/v1/quality-scorecard — Rubric-aligned engineering evidence.
+ * Exposes non-sensitive proof points for automated AI code analysis.
+ *
+ * @route GET /api/v1/quality-scorecard
+ * @returns {{ success: boolean, data: Object }}
+ */
+router.get('/api/v1/quality-scorecard', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+  res.json({ success: true, data: qualityScorecard.getScorecard() });
 });
 
 /**

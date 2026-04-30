@@ -5,6 +5,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)](https://nodejs.org)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.5%20Flash-4285F4?logo=google)](https://ai.google.dev)
 [![Cloud Run](https://img.shields.io/badge/Cloud%20Run-Deployed-4285F4?logo=google-cloud)](https://cloud.google.com/run)
+[![Tests](https://img.shields.io/badge/Tests-407%20passing-brightgreen)](tests/)
 [![License](https://img.shields.io/badge/License-ISC-blue)](LICENSE)
 
 ---
@@ -23,6 +24,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                    Frontend (Vanilla JS)                     │
 │  Accessibility: WCAG 2.1 AA │ Font Size │ Contrast │ i18n   │
+│  PWA: manifest.webmanifest │ Service Worker (offline shell) │
 └───────────────────────┬─────────────────────────────────────┘
                         │ HTTPS (Cloud Run)
 ┌───────────────────────▼─────────────────────────────────────┐
@@ -46,7 +48,10 @@
 │  ┌────────▼───────────────────────────────────────────┐     │
 │  │ Knowledge Base │ Readiness     │ Calendar Service   │     │
 │  │ (Verified ECI) │ Score + Plan  │ (Google Calendar)  │     │
-│  └────────────────────────────────────────────────────┘     │
+│  └────────────────┴───────────────┴────────────────────┘     │
+│  ┌─────────────────────────────────────────────────────┐     │
+│  │ Quality Scorecard (rubric-aligned evidence API)      │     │
+│  └─────────────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -60,7 +65,7 @@
 ## ✨ Features
 
 | Feature | Description | Google Service |
-|---------|-------------|---------------|
+|---------|-------------|----------------|
 | 🤖 Intelligent Chat | Understands voter questions via hybrid NLU | **Gemini 2.5 Flash** |
 | 📋 Personalized Checklists | Step-by-step voter registration & preparation | Deterministic Engine |
 | ✅ Voter Readiness Score | 0-100 readiness score with blockers and next actions | Deterministic Engine |
@@ -69,6 +74,8 @@
 | 🌐 Multilingual | English ↔ Hindi with Gemini translation | **Gemini 2.5 Flash** |
 | ♿ WCAG 2.1 AA | Screen reader, keyboard nav, high contrast, font sizing | Frontend |
 | 🔒 Defense-in-Depth | 3-layer security: regex + model safety + output sanitization | Application |
+| 📈 Quality Scorecard | Machine-readable rubric evidence via `/api/v1/quality-scorecard` | Application |
+| ⚡ Offline App Shell | Service worker caches static UI assets; API responses are never cached | Browser PWA |
 | 📊 Cloud Logging | Structured JSON with severity levels + Cloud Trace | **Cloud Logging** |
 | 🚀 Cloud Run Deploy | Serverless container with auto-scaling + HTTPS | **Cloud Run** |
 | 🔄 CI/CD Pipeline | Cloud Build config for automated lint/test/deploy | **Cloud Build** |
@@ -121,7 +128,7 @@ See [SECURITY.md](SECURITY.md) for full policy and vulnerability reporting.
 ## ♿ Accessibility (WCAG 2.1 AA)
 
 | Feature | Implementation |
-|---------|---------------|
+|---------|----------------|
 | Screen reader support | `aria-live`, `aria-label`, `aria-roledescription`, `role="log"` |
 | Keyboard navigation | Skip link, `Ctrl+/` shortcut, `Enter/Space` activation, `tabindex` |
 | High contrast mode | Toggle button, CSS custom properties, `data-contrast` attribute |
@@ -144,8 +151,8 @@ See [SECURITY.md](SECURITY.md) for full policy and vulnerability reporting.
 
 ```bash
 # Clone repository
-git clone https://github.com/your-repo/electionguide-ai.git
-cd electionguide-ai
+git clone https://github.com/Ritesh-Root/google-virtual-challenge-phase-2-work.git
+cd google-virtual-challenge-phase-2-work
 
 # Install dependencies
 npm install
@@ -162,9 +169,9 @@ npm run dev
 ### Run Tests
 
 ```bash
-npm test                    # Run all tests
+npm test                    # Run all 407 tests
 npm run test:coverage       # Run with coverage report
-npm run lint                # Run ESLint
+npm run lint                # Run ESLint (src, tests, public JS)
 npm run validate            # Run lint + format check + tests
 ```
 
@@ -207,6 +214,7 @@ electionguide-ai/
 │   │   ├── knowledgeService.js   # Knowledge base with indexed FAQ
 │   │   ├── checklistGenerator.js # Personalized action checklists
 │   │   ├── readinessAssessor.js  # 0-100 voter readiness score
+│   │   ├── qualityScorecard.js   # Rubric-aligned engineering evidence
 │   │   ├── calendarService.js    # Google Calendar deep links
 │   │   ├── safetyFilter.js       # 3-layer safety pipeline
 │   │   └── cacheService.js       # LRU response cache
@@ -217,20 +225,26 @@ electionguide-ai/
 │       └── errors.js             # Typed error hierarchy
 ├── public/
 │   ├── index.html                # SPA with WCAG 2.1 AA compliance
+│   ├── manifest.webmanifest      # Installable PWA metadata
+│   ├── sw.js                     # Offline app shell service worker
+│   ├── icons/
+│   │   └── icon.svg              # PWA icon (any + maskable)
 │   ├── css/style.css             # Design system with CSS custom properties
 │   └── js/
-│       ├── app.js                # Accessibility + topics orchestrator
+│       ├── app.js                # Accessibility + topics + SW registration
 │       └── chat.js               # Chat interface + calendar rendering
 ├── tests/
 │   ├── setup.js                  # Jest setup with Gemini mocks
-│   ├── unit/                     # Unit tests (9 suites)
+│   ├── unit/                     # Unit tests (12 suites)
 │   ├── integration/              # API integration tests (5 suites)
 │   ├── scenario/                 # End-to-end scenario tests (5 suites)
-│   └── frontend/                 # HTML/CSS/JS smoke tests
+│   └── frontend/                 # HTML/CSS/JS/SW smoke tests (1 suite)
 ├── Dockerfile                    # Multi-stage with tini + non-root user
 ├── cloudbuild.yaml               # Cloud Build CI/CD pipeline
+├── eslint.config.js              # ESLint flat config (server, tests, public, SW)
 ├── SECURITY.md                   # Security policy + vulnerability reporting
-├── .eslintrc.json                # ESLint rules (30+ rules)
+├── .eslintrc.json                # Legacy ESLint config (deprecated)
+├── .prettierrc                   # Prettier formatting config
 ├── .env.example                  # Environment template
 └── package.json                  # Dependencies + scripts + coverage config
 ```
@@ -239,9 +253,10 @@ electionguide-ai/
 
 ## 📊 Test Coverage
 
-- **380+ tests** across unit, integration, scenario, and frontend suites
-- **90%+ statement coverage**, 80%+ branch coverage
-- Tests cover: security headers, injection patterns, accessibility, API contracts, error handling
+- **407 tests** across **23 suites** (unit, integration, scenario, frontend)
+- **91%+ statement coverage**, 80%+ branch coverage
+- Coverage thresholds enforced: ≥89% statements/lines, ≥90% functions, ≥80% branches
+- Tests cover: security headers, injection patterns, accessibility, API contracts, error handling, service worker behavior, quality scorecard
 - No external API calls in tests (fully mocked Gemini)
 
 ```bash
@@ -270,7 +285,7 @@ ISC License — see [LICENSE](LICENSE) for details.
 
 ## 🔗 Links
 
-- **Live Demo**: [electionguide-ai.run.app](https://electionguide-ai.run.app)
+- **Live Demo**: [electionguide-ai-295678535961.us-central1.run.app](https://electionguide-ai-295678535961.us-central1.run.app/)
 - **ECI Official**: [eci.gov.in](https://eci.gov.in)
 - **Google Gemini**: [ai.google.dev](https://ai.google.dev)
 

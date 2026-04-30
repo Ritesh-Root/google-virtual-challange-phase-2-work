@@ -31,6 +31,7 @@
     loadTopics();
     setupEventListeners();
     setupKeyboardShortcuts();
+    registerServiceWorker();
   }
 
   // ===== Accessibility =====
@@ -206,6 +207,17 @@
       { title: '⚖️ Voter Rights', summary: 'Your democratic rights' },
     ];
     renderTopics(fallback);
+  }
+
+  /** Register a service worker for repeat-load performance and offline shell access. */
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator) || !window.isSecureContext) {
+      return;
+    }
+
+    navigator.serviceWorker.register('/sw.js').catch(function (err) {
+      console.error('Service worker registration failed:', err);
+    });
   }
 
   /** Escape HTML to prevent XSS. */
