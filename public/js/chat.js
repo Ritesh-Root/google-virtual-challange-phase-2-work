@@ -58,7 +58,9 @@
   // ===== Send Message =====
 
   function sendMessage(message) {
-    if (isLoading) { return; }
+    if (isLoading) {
+      return;
+    }
 
     // Add user message bubble
     addMessage(message, 'user');
@@ -66,7 +68,9 @@
     isLoading = true;
 
     // Accessibility: announce loading state
-    if (chatMessages) { chatMessages.setAttribute('aria-busy', 'true'); }
+    if (chatMessages) {
+      chatMessages.setAttribute('aria-busy', 'true');
+    }
     announceLoading('ElectionGuide AI is thinking...');
 
     // Show typing indicator
@@ -86,11 +90,15 @@
         detailLevel: appState.detailLevel || 'standard',
       }),
     })
-      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        return res.json();
+      })
       .then(function (data) {
         removeTyping(typingEl);
         isLoading = false;
-        if (chatMessages) { chatMessages.setAttribute('aria-busy', 'false'); }
+        if (chatMessages) {
+          chatMessages.setAttribute('aria-busy', 'false');
+        }
         announceLoading('');
 
         if (data.success) {
@@ -104,7 +112,9 @@
       .catch(function (err) {
         removeTyping(typingEl);
         isLoading = false;
-        if (chatMessages) { chatMessages.setAttribute('aria-busy', 'false'); }
+        if (chatMessages) {
+          chatMessages.setAttribute('aria-busy', 'false');
+        }
         announceLoading('');
         addErrorMessage('Network error. Please check your connection.');
         console.error('Chat error:', err);
@@ -114,17 +124,22 @@
   // ===== Message Rendering =====
 
   function addWelcomeMessage() {
-    if (!chatMessages) { return; }
+    if (!chatMessages) {
+      return;
+    }
     var div = document.createElement('div');
     div.className = 'message message-ai';
-    div.innerHTML = '<div class="message-summary">🗳️ Welcome to <strong>ElectionGuide AI</strong>! '
-      + 'I\'m here to help you understand the Indian election process. '
-      + 'Ask me anything or click a topic above to get started!</div>';
+    div.innerHTML =
+      '<div class="message-summary">🗳️ Welcome to <strong>ElectionGuide AI</strong>! ' +
+      "I'm here to help you understand the Indian election process. " +
+      'Ask me anything or click a topic above to get started!</div>';
     chatMessages.appendChild(div);
   }
 
   function addMessage(text, type) {
-    if (!chatMessages) { return; }
+    if (!chatMessages) {
+      return;
+    }
     var div = document.createElement('div');
     div.className = 'message message-' + type;
     div.textContent = text;
@@ -133,7 +148,9 @@
   }
 
   function addErrorMessage(text) {
-    if (!chatMessages) { return; }
+    if (!chatMessages) {
+      return;
+    }
     var div = document.createElement('div');
     div.className = 'message message-ai';
     div.innerHTML = '<div class="message-summary" style="color: var(--danger);">⚠️ ' + escapeHtml(text) + '</div>';
@@ -142,7 +159,9 @@
   }
 
   function renderAIResponse(data) {
-    if (!chatMessages) { return; }
+    if (!chatMessages) {
+      return;
+    }
 
     var div = document.createElement('div');
     div.className = 'message message-ai';
@@ -155,9 +174,11 @@
 
     // Detailed explanation (expandable)
     if (data.detailed_explanation) {
-      html += '<details style="margin-top: 12px;"><summary style="cursor:pointer; color: var(--primary); font-weight: 500;">📖 View detailed explanation</summary>'
-        + '<div style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">'
-        + formatMarkdown(data.detailed_explanation) + '</div></details>';
+      html +=
+        '<details style="margin-top: 12px;"><summary style="cursor:pointer; color: var(--primary); font-weight: 500;">📖 View detailed explanation</summary>' +
+        '<div style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">' +
+        formatMarkdown(data.detailed_explanation) +
+        '</div></details>';
     }
 
     // Next 3 Actions
@@ -176,17 +197,27 @@
 
     // Confidence badge
     if (data.confidence) {
-      html += '<span class="confidence-badge confidence-' + escapeHtml(data.confidence) + '">'
-        + escapeHtml(data.confidence) + ' confidence</span>';
+      html +=
+        '<span class="confidence-badge confidence-' +
+        escapeHtml(data.confidence) +
+        '">' +
+        escapeHtml(data.confidence) +
+        ' confidence</span>';
     }
 
     // Sources
     if (data.sources && data.sources.length > 0) {
       html += '<div class="message-sources">📚 Sources: ';
       data.sources.forEach(function (source, i) {
-        if (i > 0) { html += ' • '; }
-        html += '<a href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">'
-          + escapeHtml(source.title) + '</a>';
+        if (i > 0) {
+          html += ' • ';
+        }
+        html +=
+          '<a href="' +
+          escapeHtml(source.url) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          escapeHtml(source.title) +
+          '</a>';
       });
       html += '</div>';
     }
@@ -195,8 +226,12 @@
     if (data.follow_up_suggestions && data.follow_up_suggestions.length > 0) {
       html += '<div class="follow-up-chips">';
       data.follow_up_suggestions.forEach(function (suggestion) {
-        html += '<button class="follow-up-chip" data-message="' + escapeHtml(suggestion) + '">'
-          + escapeHtml(suggestion) + '</button>';
+        html +=
+          '<button class="follow-up-chip" data-message="' +
+          escapeHtml(suggestion) +
+          '">' +
+          escapeHtml(suggestion) +
+          '</button>';
       });
       html += '</div>';
     }
@@ -212,7 +247,9 @@
     div.querySelectorAll('.follow-up-chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
         var msg = this.getAttribute('data-message');
-        if (msg) { sendMessage(msg); }
+        if (msg) {
+          sendMessage(msg);
+        }
       });
     });
 
@@ -232,27 +269,41 @@
   // ===== Calendar Rendering =====
 
   function renderCalendarSection(links, mapLink) {
-    if (!calendarSection || !calendarLinks) { return; }
+    if (!calendarSection || !calendarLinks) {
+      return;
+    }
 
-    calendarSection.style.display = 'block';
+    calendarSection.removeAttribute('hidden');
     calendarLinks.innerHTML = '';
 
     links.forEach(function (item) {
       var card = document.createElement('div');
       card.className = 'calendar-card';
-      card.innerHTML = '<div class="calendar-card-info">'
-        + '<h3>' + escapeHtml(item.title) + '</h3>'
-        + '<p>' + escapeHtml(item.description) + '</p></div>'
-        + '<a href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener noreferrer" '
-        + 'class="calendar-add-btn" aria-label="Add ' + escapeHtml(item.title) + ' to Google Calendar">'
-        + '📅 Add to Calendar</a>';
+      card.innerHTML =
+        '<div class="calendar-card-info">' +
+        '<h3>' +
+        escapeHtml(item.title) +
+        '</h3>' +
+        '<p>' +
+        escapeHtml(item.description) +
+        '</p></div>' +
+        '<a href="' +
+        escapeHtml(item.link) +
+        '" target="_blank" rel="noopener noreferrer" ' +
+        'class="calendar-add-btn" aria-label="Add ' +
+        escapeHtml(item.title) +
+        ' to Google Calendar">' +
+        '📅 Add to Calendar</a>';
       calendarLinks.appendChild(card);
     });
 
     if (mapLink && mapLinkContainer) {
-      mapLinkContainer.innerHTML = '<a href="' + escapeHtml(mapLink) + '" target="_blank" rel="noopener noreferrer" '
-        + 'class="map-btn" aria-label="Find your polling booth on Google Maps">'
-        + '📍 Find Polling Booth on Google Maps</a>';
+      mapLinkContainer.innerHTML =
+        '<a href="' +
+        escapeHtml(mapLink) +
+        '" target="_blank" rel="noopener noreferrer" ' +
+        'class="map-btn" aria-label="Find your polling booth on Google Maps">' +
+        '📍 Find Polling Booth on Google Maps</a>';
     }
 
     // Scroll to calendar section
@@ -262,7 +313,9 @@
   // ===== Typing Indicator =====
 
   function showTyping() {
-    if (!chatMessages) { return null; }
+    if (!chatMessages) {
+      return null;
+    }
     var div = document.createElement('div');
     div.className = 'typing-indicator';
     div.setAttribute('aria-label', 'ElectionGuide AI is thinking');
@@ -295,7 +348,9 @@
   }
 
   function escapeHtml(text) {
-    if (!text) { return ''; }
+    if (!text) {
+      return '';
+    }
     var div = document.createElement('div');
     div.appendChild(document.createTextNode(text));
     return div.innerHTML;
@@ -303,7 +358,9 @@
 
   /** Basic markdown to HTML for detailed explanations. */
   function formatMarkdown(text) {
-    if (!text) { return ''; }
+    if (!text) {
+      return '';
+    }
     return escapeHtml(text)
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')

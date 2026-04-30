@@ -4,10 +4,7 @@ const app = require('../../src/app');
 
 describe('Calendar Routes', () => {
   test('POST /api/v1/calendar/reminders — returns reminder links', async () => {
-    const res = await request(app)
-      .post('/api/v1/calendar/reminders')
-      .send({ state: 'Maharashtra' })
-      .expect(200);
+    const res = await request(app).post('/api/v1/calendar/reminders').send({ state: 'Maharashtra' }).expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.reminders).toBeDefined();
@@ -21,10 +18,7 @@ describe('Calendar Routes', () => {
   });
 
   test('POST /api/v1/calendar/reminders — returns map link', async () => {
-    const res = await request(app)
-      .post('/api/v1/calendar/reminders')
-      .send({ state: 'Delhi' })
-      .expect(200);
+    const res = await request(app).post('/api/v1/calendar/reminders').send({ state: 'Delhi' }).expect(200);
 
     expect(res.body.data.mapLink).toBeDefined();
     expect(res.body.data.mapLink).toContain('google.com/maps');
@@ -32,10 +26,7 @@ describe('Calendar Routes', () => {
   });
 
   test('POST /api/v1/calendar/reminders — works without state', async () => {
-    const res = await request(app)
-      .post('/api/v1/calendar/reminders')
-      .send({})
-      .expect(200);
+    const res = await request(app).post('/api/v1/calendar/reminders').send({}).expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.reminders.length).toBeGreaterThan(0);

@@ -273,10 +273,15 @@ body {
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  color: inherit;
+  display: block;
+  font: inherit;
   padding: 24px;
+  text-align: left;
   cursor: pointer;
   transition: var(--transition);
   min-height: 44px;
+  width: 100%;
 }
 
 .topic-card:hover {
@@ -286,6 +291,7 @@ body {
 }
 
 .topic-card-title {
+  display: block;
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 8px;

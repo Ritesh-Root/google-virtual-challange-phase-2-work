@@ -81,7 +81,8 @@ const CLASSIFIER_SCHEMA = {
   properties: {
     intent: {
       type: SchemaType.STRING,
-      description: 'One of: eligibility, registration, timeline, voting_day, documents, faq, calendar, greeting, unsupported',
+      description:
+        'One of: eligibility, registration, timeline, voting_day, documents, faq, calendar, greeting, unsupported',
     },
     confidence: {
       type: SchemaType.STRING,

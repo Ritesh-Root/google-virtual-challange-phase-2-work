@@ -18,10 +18,7 @@ describe('Scenario: Deadline urgency', () => {
   });
 
   test('Responds with timeline for election schedule query', async () => {
-    const res = await request(app)
-      .post('/api/v1/chat')
-      .send({ message: 'When are the election dates?' })
-      .expect(200);
+    const res = await request(app).post('/api/v1/chat').send({ message: 'When are the election dates?' }).expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.answer_summary).toBeDefined();

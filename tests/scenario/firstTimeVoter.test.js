@@ -6,10 +6,7 @@ describe('Scenario: First-time voter journey', () => {
   let sessionId;
 
   test('Step 1: User says "I just turned 18" → extracts age, responds about eligibility', async () => {
-    const res = await request(app)
-      .post('/api/v1/chat')
-      .send({ message: 'I just turned 18' })
-      .expect(200);
+    const res = await request(app).post('/api/v1/chat').send({ message: 'I just turned 18' }).expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.sessionId).toBeDefined();
@@ -34,9 +31,7 @@ describe('Scenario: First-time voter journey', () => {
 
     if (data.next_3_actions) {
       expect(data.next_3_actions.length).toBeLessThanOrEqual(3);
-      const hasRegistration = data.next_3_actions.some(
-        (a) => /register|form 6|voter|enroll/i.test(a)
-      );
+      const hasRegistration = data.next_3_actions.some((a) => /register|form 6|voter|enroll/i.test(a));
       expect(hasRegistration).toBe(true);
     }
 

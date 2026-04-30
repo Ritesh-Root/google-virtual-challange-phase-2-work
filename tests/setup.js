@@ -9,16 +9,17 @@ process.env.PORT = '0';
 jest.mock('@google/generative-ai', () => {
   const mockGenerateContent = jest.fn().mockResolvedValue({
     response: {
-      text: () => JSON.stringify({
-        answer_summary: 'Test response about elections.',
-        detailed_explanation: 'Detailed test explanation about the election process.',
-        next_3_actions: ['Action 1', 'Action 2', 'Action 3'],
-        deadlines: [],
-        sources: [{ title: 'ECI', url: 'https://eci.gov.in' }],
-        confidence: 'high',
-        follow_up_suggestions: ['Follow up 1', 'Follow up 2'],
-        disclaimer: 'This is educational information, not legal advice.',
-      }),
+      text: () =>
+        JSON.stringify({
+          answer_summary: 'Test response about elections.',
+          detailed_explanation: 'Detailed test explanation about the election process.',
+          next_3_actions: ['Action 1', 'Action 2', 'Action 3'],
+          deadlines: [],
+          sources: [{ title: 'ECI', url: 'https://eci.gov.in' }],
+          confidence: 'high',
+          follow_up_suggestions: ['Follow up 1', 'Follow up 2'],
+          disclaimer: 'This is educational information, not legal advice.',
+        }),
       usageMetadata: {
         promptTokenCount: 100,
         candidatesTokenCount: 50,
@@ -30,30 +31,40 @@ jest.mock('@google/generative-ai', () => {
   // Classifier mock — returns 'faq' intent for election-related, 'unsupported' for unrelated
   const mockClassifierContent = jest.fn().mockImplementation((prompt) => {
     const lower = (typeof prompt === 'string' ? prompt : '').toLowerCase();
-    if (lower.includes('pizza') || lower.includes('weather') || lower.includes('cat')) {
+    const userMessageMatch = lower.match(/user message:\s*"([^"]*)"/);
+    const userMessage = userMessageMatch ? userMessageMatch[1] : lower;
+    if (
+      userMessage.includes('pizza') ||
+      userMessage.includes('weather') ||
+      userMessage.includes('cat') ||
+      userMessage.includes('uk') ||
+      userMessage.includes('united kingdom')
+    ) {
       return Promise.resolve({
         response: {
-          text: () => JSON.stringify({
-            intent: 'unsupported',
-            confidence: 'high',
-            reasoning: 'Not related to elections',
-          }),
+          text: () =>
+            JSON.stringify({
+              intent: 'unsupported',
+              confidence: 'high',
+              reasoning: 'Not related to elections',
+            }),
         },
       });
     }
     return Promise.resolve({
       response: {
-        text: () => JSON.stringify({
-          intent: 'faq',
-          confidence: 'medium',
-          reasoning: 'Related to election education',
-        }),
+        text: () =>
+          JSON.stringify({
+            intent: 'faq',
+            confidence: 'medium',
+            reasoning: 'Related to election education',
+          }),
       },
     });
   });
 
   // Translation mock — returns prefixed text
-  const mockTranslationContent = jest.fn().mockImplementation((prompt) => {
+  const mockTranslationContent = jest.fn().mockImplementation((_prompt) => {
     return Promise.resolve({
       response: {
         text: () => '[Translated] Test translation output',

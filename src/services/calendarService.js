@@ -65,9 +65,7 @@ class CalendarService {
    * @returns {string} Google Maps search URL
    */
   generatePollingBoothMapLink(state) {
-    const query = state
-      ? `polling booth ${state} India`
-      : 'polling booth near me India';
+    const query = state ? `polling booth ${state} India` : 'polling booth near me India';
     return `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
   }
 
@@ -89,7 +87,11 @@ class CalendarService {
 
   /** @private Format date range for Google Calendar. */
   _formatDateRange(date) {
-    const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const fmt = (d) =>
+      d
+        .toISOString()
+        .replace(/[-:]/g, '')
+        .replace(/\.\d{3}/, '');
     const end = new Date(date);
     end.setHours(end.getHours() + 1);
     return `${fmt(date)}/${fmt(end)}`;

@@ -4,10 +4,7 @@ const app = require('../../src/app');
 
 describe('Scenario: Accessibility mode', () => {
   test('Hindi language support works', async () => {
-    const res = await request(app)
-      .post('/api/v1/chat')
-      .send({ message: 'Hello', language: 'hi' })
-      .expect(200);
+    const res = await request(app).post('/api/v1/chat').send({ message: 'Hello', language: 'hi' }).expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.answer_summary).toBeDefined();

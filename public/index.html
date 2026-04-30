@@ -3,18 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ElectionGuide AI - Interactive assistant for understanding the Indian election process, voter registration, timelines, and polling procedures.">
+  <meta name="description" content="ElectionGuide AI - Interactive assistant for understanding the Indian election process, voter registration, timelines, and polling procedures. Powered by Google Gemini.">
   <meta name="theme-color" content="#0D1117">
   <meta name="robots" content="index, follow">
+  <meta name="author" content="ElectionGuide AI Team">
+  <meta name="keywords" content="Indian elections, voter registration, election process, ECI, voter ID, EPIC, election timeline, polling booth, NOTA, Google Gemini">
   <meta property="og:title" content="ElectionGuide AI - Election Process Education">
   <meta property="og:description" content="Learn about the Indian election process with an interactive AI assistant powered by Google Gemini">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ElectionGuide AI">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="ElectionGuide AI - Election Process Education">
+  <meta name="twitter:description" content="Interactive AI assistant for Indian election process education">
   <title>ElectionGuide AI — Election Process Education</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+  <link rel="canonical" href="https://electionguide-ai.run.app">
 </head>
 <body>
   <a href="#main-content" class="skip-link" id="skip-link">Skip to main content</a>
@@ -24,75 +31,78 @@
       <span class="logo" aria-hidden="true">🗳️</span>
       <h1 class="header-title">ElectionGuide AI</h1>
     </div>
-    <div class="header-controls" id="header-controls">
+    <nav class="header-controls" id="header-controls" aria-label="Site controls">
       <div class="control-group">
-        <label for="lang-select" class="sr-only">Language</label>
+        <label for="lang-select" class="sr-only">Select language</label>
         <select id="lang-select" aria-label="Select language" class="control-select">
-          <option value="en">English</option>
-          <option value="hi">हिन्दी</option>
+          <option value="en" lang="en">English</option>
+          <option value="hi" lang="hi">हिन्दी</option>
         </select>
       </div>
       <div class="control-group">
-        <label for="detail-select" class="sr-only">Detail level</label>
+        <label for="detail-select" class="sr-only">Select detail level</label>
         <select id="detail-select" aria-label="Select detail level" class="control-select">
           <option value="simple">Simple</option>
           <option value="standard" selected>Standard</option>
           <option value="detailed">Detailed</option>
         </select>
       </div>
-      <div class="a11y-controls">
-        <button id="font-decrease" aria-label="Decrease font size" class="a11y-btn" title="Decrease font size">A-</button>
-        <button id="font-increase" aria-label="Increase font size" class="a11y-btn" title="Increase font size">A+</button>
-        <button id="contrast-toggle" aria-label="Toggle high contrast mode" class="a11y-btn" title="Toggle contrast">◐</button>
+      <div class="a11y-controls" role="group" aria-label="Accessibility controls">
+        <button id="font-decrease" aria-label="Decrease font size" class="a11y-btn" title="Decrease font size" type="button">A-</button>
+        <button id="font-increase" aria-label="Increase font size" class="a11y-btn" title="Increase font size" type="button">A+</button>
+        <button id="contrast-toggle" aria-label="Toggle high contrast mode" class="a11y-btn" title="Toggle contrast" type="button">◐</button>
       </div>
-    </div>
+    </nav>
   </header>
 
-  <main id="main-content" role="main">
-    <section class="hero" id="hero-section">
+  <main id="main-content">
+    <section class="hero" id="hero-section" aria-labelledby="hero-title">
+      <h2 id="hero-title" class="sr-only">Welcome to ElectionGuide AI</h2>
       <p class="hero-subtitle">Your trusted guide to the Indian election process 🇮🇳</p>
-      <div class="quick-start" id="quick-start" aria-label="Quick start questions">
-        <button class="quick-btn" data-message="Am I eligible to vote?" id="qs-eligible">🗳️ Am I eligible?</button>
-        <button class="quick-btn" data-message="How do I register to vote?" id="qs-register">📋 How to register?</button>
-        <button class="quick-btn" data-message="Show me the election timeline" id="qs-timeline">📅 Election timeline</button>
-        <button class="quick-btn" data-message="Remind me of election dates" id="qs-remind">⏰ Set reminders</button>
-      </div>
+      <nav class="quick-start" id="quick-start" aria-label="Quick start questions">
+        <button class="quick-btn" data-message="Am I eligible to vote?" id="qs-eligible" type="button" aria-label="Ask: Am I eligible to vote?">🗳️ Am I eligible?</button>
+        <button class="quick-btn" data-message="How do I register to vote?" id="qs-register" type="button" aria-label="Ask: How do I register to vote?">📋 How to register?</button>
+        <button class="quick-btn" data-message="Show me the election timeline" id="qs-timeline" type="button" aria-label="Ask: Show me the election timeline">📅 Election timeline</button>
+        <button class="quick-btn" data-message="Remind me of election dates" id="qs-remind" type="button" aria-label="Ask: Remind me of election dates">⏰ Set reminders</button>
+      </nav>
     </section>
 
-    <section class="topics-section" id="topics-section" aria-label="Election topics">
-      <h2 class="section-title">📚 Explore Election Topics</h2>
-      <div class="topic-grid" id="topic-grid"></div>
+    <section class="topics-section" id="topics-section" aria-labelledby="topics-title">
+      <h2 class="section-title" id="topics-title">📚 Explore Election Topics</h2>
+      <div class="topic-grid" id="topic-grid" role="list" aria-label="Available election topics"></div>
     </section>
 
-    <section class="chat-section" id="chat-section" aria-label="Chat with ElectionGuide AI">
-      <h2 class="section-title">💬 Ask ElectionGuide AI</h2>
-      <div class="chat-container" id="chat-container">
-        <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+    <section class="chat-section" id="chat-section" aria-labelledby="chat-title">
+      <h2 class="section-title" id="chat-title">💬 Ask ElectionGuide AI</h2>
+      <div class="chat-container" id="chat-container" aria-roledescription="Interactive election education chatbot">
+        <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Chat conversation history" aria-relevant="additions"></div>
         <div class="chat-input-area">
-          <form id="chat-form" aria-label="Send a message">
-            <input type="text" id="chat-input" placeholder="Ask about elections..." 
-                   aria-label="Type your question about the election process" aria-describedby="chat-hint" maxlength="500" autocomplete="off">
+          <form id="chat-form" aria-label="Send a message to ElectionGuide AI">
+            <label for="chat-input" class="sr-only">Type your question about the election process</label>
+            <input type="text" id="chat-input" placeholder="Ask about elections..."
+                   aria-label="Type your question about the election process" aria-describedby="chat-hint" 
+                   maxlength="500" autocomplete="off" spellcheck="true" enterkeyhint="send">
             <button type="submit" id="chat-send" aria-label="Send message">
-              <span class="send-icon">➤</span>
+              <span class="send-icon" aria-hidden="true">➤</span>
             </button>
           </form>
-          <p class="chat-hint" id="chat-hint">Press Enter to send • Ctrl+/ to focus</p>
+          <p class="chat-hint" id="chat-hint">Press Enter to send • Ctrl+/ to focus • Max 500 characters</p>
         </div>
       </div>
     </section>
 
-    <section class="calendar-section" id="calendar-section" aria-label="Election reminders" style="display:none;">
-      <h2 class="section-title">📅 Election Reminders</h2>
-      <div id="calendar-links" class="calendar-links"></div>
+    <section class="calendar-section" id="calendar-section" aria-labelledby="calendar-title" hidden>
+      <h2 class="section-title" id="calendar-title">📅 Election Reminders</h2>
+      <div id="calendar-links" class="calendar-links" role="list" aria-label="Calendar reminder links"></div>
       <div id="map-link-container" class="map-link-container"></div>
     </section>
   </main>
 
   <footer role="contentinfo" id="site-footer">
     <div class="footer-content">
-      <p>Data source: <a href="https://eci.gov.in" target="_blank" rel="noopener noreferrer">Election Commission of India</a></p>
-      <p class="disclaimer">⚠️ Educational information only. Not legal advice. For official guidance, visit <a href="https://eci.gov.in" target="_blank" rel="noopener noreferrer">eci.gov.in</a></p>
-      <p class="powered-by">Powered by <strong>Google Gemini AI</strong> • Deployed on <strong>Google Cloud Run</strong></p>
+      <p>Data source: <a href="https://eci.gov.in" target="_blank" rel="noopener noreferrer">Election Commission of India<span class="sr-only"> (opens in new tab)</span></a></p>
+      <p class="disclaimer">⚠️ Educational information only. Not legal advice. For official guidance, visit <a href="https://eci.gov.in" target="_blank" rel="noopener noreferrer">eci.gov.in<span class="sr-only"> (opens in new tab)</span></a></p>
+      <p class="powered-by">Powered by <strong>Google Gemini 2.5 Flash</strong> • Deployed on <strong>Google Cloud Run</strong> • Typography by <strong>Google Fonts</strong></p>
     </div>
   </footer>
 

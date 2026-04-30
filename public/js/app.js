@@ -64,7 +64,9 @@
   function announce(message) {
     if (srAnnouncements) {
       srAnnouncements.textContent = message;
-      setTimeout(function () { srAnnouncements.textContent = ''; }, 1000);
+      setTimeout(function () {
+        srAnnouncements.textContent = '';
+      }, 1000);
     }
   }
 
@@ -145,7 +147,9 @@
   /** Load topics from API and render cards. */
   function loadTopics() {
     fetch('/api/v1/topics')
-      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        return res.json();
+      })
       .then(function (data) {
         if (data.success && data.data && data.data.topics) {
           renderTopics(data.data.topics);
@@ -160,16 +164,25 @@
 
   /** Render topic cards from API data. */
   function renderTopics(topics) {
-    if (!topicGrid) { return; }
+    if (!topicGrid) {
+      return;
+    }
     topicGrid.innerHTML = '';
     topics.forEach(function (topic) {
-      var card = document.createElement('div');
+      var item = document.createElement('div');
+      item.setAttribute('role', 'listitem');
+
+      var card = document.createElement('button');
+      card.type = 'button';
       card.className = 'topic-card';
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
       card.setAttribute('aria-label', 'Learn about: ' + topic.title);
-      card.innerHTML = '<div class="topic-card-title">' + escapeHtml(topic.title) + '</div>'
-        + '<div class="topic-card-summary">' + escapeHtml(topic.summary) + '</div>';
+      card.innerHTML =
+        '<span class="topic-card-title">' +
+        escapeHtml(topic.title) +
+        '</span>' +
+        '<div class="topic-card-summary">' +
+        escapeHtml(topic.summary) +
+        '</div>';
 
       // Click to ask about topic
       card.addEventListener('click', function () {
@@ -178,15 +191,8 @@
         }
       });
 
-      // Enter/Space keyboard activation
-      card.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          card.click();
-        }
-      });
-
-      topicGrid.appendChild(card);
+      item.appendChild(card);
+      topicGrid.appendChild(item);
     });
   }
 
@@ -211,7 +217,9 @@
 
   // ===== Exports =====
   window.ElectionApp = {
-    getState: function () { return Object.assign({}, state); },
+    getState: function () {
+      return Object.assign({}, state);
+    },
     announce: announce,
     escapeHtml: escapeHtml,
   };

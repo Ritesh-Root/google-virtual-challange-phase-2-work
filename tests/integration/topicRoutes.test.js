@@ -31,4 +31,51 @@ describe('Topic Routes', () => {
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe('NOT_FOUND');
   });
+
+  // ===== NEW TESTS =====
+
+  test('GET /api/v1/topics — includes Cache-Control header', async () => {
+    const res = await request(app).get('/api/v1/topics').expect(200);
+
+    expect(res.headers['cache-control']).toContain('public');
+    expect(res.headers['cache-control']).toContain('max-age=3600');
+  });
+
+  test('GET /api/v1/topics/:topicKey — includes Cache-Control header', async () => {
+    const res = await request(app).get('/api/v1/topics/eligibility').expect(200);
+
+    expect(res.headers['cache-control']).toContain('public');
+  });
+
+  test('GET /api/v1/topics — each topic has required fields', async () => {
+    const res = await request(app).get('/api/v1/topics').expect(200);
+
+    res.body.data.topics.forEach((topic) => {
+      expect(typeof topic.key).toBe('string');
+      expect(typeof topic.title).toBe('string');
+      expect(typeof topic.summary).toBe('string');
+      expect(topic.key.length).toBeGreaterThan(0);
+    });
+  });
+
+  test('GET /api/v1/topics/registration — has registration details', async () => {
+    const res = await request(app).get('/api/v1/topics/registration').expect(200);
+
+    expect(res.body.data.title).toContain('Registration');
+    expect(res.body.data.methods).toBeDefined();
+  });
+
+  test('GET /api/v1/topics/election_timeline — has phases', async () => {
+    const res = await request(app).get('/api/v1/topics/election_timeline').expect(200);
+
+    expect(res.body.data.phases).toBeDefined();
+    expect(res.body.data.phases.length).toBe(9);
+  });
+
+  test('GET /api/v1/topics/voter_rights — has rights list', async () => {
+    const res = await request(app).get('/api/v1/topics/voter_rights').expect(200);
+
+    expect(res.body.data.rights).toBeDefined();
+    expect(res.body.data.rights.length).toBeGreaterThan(0);
+  });
 });

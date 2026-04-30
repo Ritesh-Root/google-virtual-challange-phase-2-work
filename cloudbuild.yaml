@@ -1,0 +1,79 @@
+# Google Cloud Build configuration for ElectionGuide AI
+# Builds Docker image, runs tests, and deploys to Cloud Run
+#
+# Trigger: Push to main branch
+# Usage: gcloud builds submit --config cloudbuild.yaml .
+#
+# Required substitutions:
+#   _REGION: Cloud Run region (default: us-central1)
+#   _SERVICE_NAME: Cloud Run service name (default: electionguide-ai)
+#   _GEMINI_SECRET_NAME: Secret Manager secret containing the Gemini API key
+
+steps:
+  # Step 1: Install dependencies and run linting
+  - name: 'node:20-alpine'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        npm ci
+        npm run lint
+    id: 'lint'
+
+  # Step 2: Run tests with coverage
+  - name: 'node:20-alpine'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        npm ci
+        npm run test:coverage
+    id: 'test'
+    env:
+      - 'NODE_ENV=test'
+      - 'GEMINI_API_KEY=test-key-for-ci'
+
+  # Step 3: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest'
+      - '.'
+    id: 'build'
+
+  # Step 4: Push Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA'
+    id: 'push'
+
+  # Step 5: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image=gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--memory=256Mi'
+      - '--cpu=1'
+      - '--min-instances=0'
+      - '--max-instances=3'
+      - '--set-env-vars=NODE_ENV=production'
+      - '--set-secrets=GEMINI_API_KEY=${_GEMINI_SECRET_NAME}:latest'
+    id: 'deploy'
+
+substitutions:
+  _REGION: 'us-central1'
+  _SERVICE_NAME: 'electionguide-ai'
+  _GEMINI_SECRET_NAME: 'gemini-api-key'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

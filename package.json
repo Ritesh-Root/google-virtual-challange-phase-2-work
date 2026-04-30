@@ -3,14 +3,23 @@
   "version": "1.0.0",
   "description": "Interactive AI assistant for understanding the Indian election process, powered by Google Gemini",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "jest --forceExit --detectOpenHandles",
-    "test:coverage": "jest --forceExit --detectOpenHandles --coverage",
-    "lint": "eslint src/ tests/",
-    "lint:fix": "eslint src/ tests/ --fix",
-    "format": "prettier --write 'src/**/*.js' 'tests/**/*.js'"
+    "dev": "node node_modules/nodemon/bin/nodemon.js src/server.js",
+    "test": "node node_modules/jest/bin/jest.js --forceExit --detectOpenHandles",
+    "test:coverage": "node node_modules/jest/bin/jest.js --forceExit --detectOpenHandles --coverage",
+    "test:watch": "node node_modules/jest/bin/jest.js --watch --detectOpenHandles",
+    "lint": "node node_modules/eslint/bin/eslint.js src/ tests/",
+    "lint:fix": "node node_modules/eslint/bin/eslint.js src/ tests/ --fix",
+    "format": "node node_modules/prettier/bin/prettier.cjs --write 'src/**/*.js' 'tests/**/*.js' 'public/**/*.js'",
+    "format:check": "node node_modules/prettier/bin/prettier.cjs --check 'src/**/*.js' 'tests/**/*.js' 'public/**/*.js'",
+    "audit": "npm audit --audit-level=moderate",
+    "validate": "npm run lint && npm run format:check && npm test",
+    "prestart": "node -e \"if(!process.env.GEMINI_API_KEY){console.error('ERROR: GEMINI_API_KEY not set');process.exit(1)}\""
   },
   "jest": {
     "testEnvironment": "node",
@@ -18,17 +27,21 @@
     "coverageDirectory": "coverage",
     "coverageThreshold": {
       "global": {
-        "branches": 75,
-        "functions": 85,
-        "lines": 85,
-        "statements": 85
+        "branches": 80,
+        "functions": 90,
+        "lines": 89,
+        "statements": 89
       }
     },
     "testPathIgnorePatterns": ["/node_modules/"],
-    "coveragePathIgnorePatterns": ["/node_modules/", "/tests/"]
+    "coveragePathIgnorePatterns": ["/node_modules/", "/tests/"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js"
+    ]
   },
-  "keywords": ["election", "education", "ai", "gemini", "india"],
-  "author": "",
+  "keywords": ["election", "education", "ai", "gemini", "india", "google-cloud", "accessibility"],
+  "author": "ElectionGuide AI Team",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {

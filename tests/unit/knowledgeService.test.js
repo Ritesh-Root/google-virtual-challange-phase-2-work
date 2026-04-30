@@ -52,6 +52,11 @@ describe('KnowledgeService', () => {
       expect(result).toBeNull();
     });
 
+    test('does not match generic stopwords to FAQ entries', () => {
+      expect(knowledgeService.searchFAQ('what weather')).toBeNull();
+      expect(knowledgeService.searchFAQ('what is cricket')).toBeNull();
+    });
+
     test('handles empty query', () => {
       const result = knowledgeService.searchFAQ('');
       expect(result).toBeNull();

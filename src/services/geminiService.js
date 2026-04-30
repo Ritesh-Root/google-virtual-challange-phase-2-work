@@ -52,13 +52,15 @@ class GeminiService {
       // Log token usage for efficiency monitoring
       const usage = result.response.usageMetadata;
       if (usage) {
-        console.log(JSON.stringify({
-          event: 'gemini_usage',
-          intent,
-          promptTokens: usage.promptTokenCount,
-          responseTokens: usage.candidatesTokenCount,
-          totalTokens: usage.totalTokenCount,
-        }));
+        console.log(
+          JSON.stringify({
+            event: 'gemini_usage',
+            intent,
+            promptTokens: usage.promptTokenCount,
+            responseTokens: usage.candidatesTokenCount,
+            totalTokens: usage.totalTokenCount,
+          })
+        );
       }
 
       // Gemini guarantees valid JSON via responseSchema — parse directly
@@ -103,12 +105,14 @@ Classify this message. If it's related to Indian elections in any way, choose th
       const responseText = result.response.text();
       const parsed = JSON.parse(responseText);
 
-      console.log(JSON.stringify({
-        event: 'gemini_classify',
-        message: message.substring(0, 50),
-        intent: parsed.intent,
-        confidence: parsed.confidence,
-      }));
+      console.log(
+        JSON.stringify({
+          event: 'gemini_classify',
+          message: message.substring(0, 50),
+          intent: parsed.intent,
+          confidence: parsed.confidence,
+        })
+      );
 
       // Validate the intent is in our known set
       const validIntents = Object.values(INTENTS);
@@ -201,9 +205,8 @@ ${text}`;
     const actions = structuredData?.actions || structuredData?.checklist?.actions;
     return {
       answer_summary: rawText || 'Here is the information you requested about the Indian election process.',
-      detailed_explanation: typeof structuredData === 'object'
-        ? JSON.stringify(structuredData, null, 2)
-        : String(structuredData || ''),
+      detailed_explanation:
+        typeof structuredData === 'object' ? JSON.stringify(structuredData, null, 2) : String(structuredData || ''),
       next_3_actions: actions ? actions.slice(0, 3).map((a) => a.action) : null,
       deadlines: [],
       sources: structuredData?.sources || [{ title: 'Election Commission of India', url: 'https://eci.gov.in' }],

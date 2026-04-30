@@ -4,36 +4,54 @@ const { AppError } = require('../utils/errors');
 
 /**
  * Centralized error handling middleware.
- * Distinguishes operational errors from programmer errors.
+ * Distinguishes operational errors (client-safe) from programmer errors.
  * Never exposes internal details in production.
+ * Outputs structured JSON compatible with Google Cloud Error Reporting.
+ *
+ * @see https://cloud.google.com/error-reporting/docs/formatting-error-messages
+ *
  * @param {Error} err - Error object
  * @param {import('express').Request} req - Express request
  * @param {import('express').Response} res - Express response
- * @param {Function} _next - Express next function
+ * @param {Function} _next - Express next function (required for Express error handler signature)
  */
 function errorHandler(err, req, res, _next) {
-  // Log the full error internally (structured JSON for Cloud Run)
-  console.error(JSON.stringify({
-    event: 'error',
-    code: err.code || 'UNKNOWN',
-    message: err.message,
-    path: req.path,
-    method: req.method,
-    stack: config.isDev ? err.stack : undefined,
-  }));
-
   // Determine status code and error code
   const statusCode = err instanceof AppError ? err.statusCode : 500;
   const code = err instanceof AppError ? err.code : 'INTERNAL_ERROR';
+  const isOperational = err instanceof AppError && err.isOperational;
 
-  // Client-safe response — never expose stack traces
+  // Structured error log compatible with Google Cloud Error Reporting
+  const errorLog = {
+    severity: statusCode >= 500 ? 'ERROR' : 'WARNING',
+    '@type': 'type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent',
+    event: 'error',
+    code,
+    message: err.message,
+    httpRequest: {
+      method: req.method,
+      url: req.originalUrl || req.url,
+      responseStatusCode: statusCode,
+      remoteIp: req.ip,
+      userAgent: req.get('user-agent') || 'unknown',
+    },
+    correlationId: req.correlationId || 'unknown',
+    isOperational,
+    stack: config.isDev ? err.stack : undefined,
+    serviceContext: {
+      service: 'electionguide-ai',
+      version: '1.0.0',
+    },
+  };
+
+  console.error(JSON.stringify(errorLog));
+
+  // Client-safe response — never expose stack traces or internal details
   res.status(statusCode).json({
     success: false,
     error: {
       code,
-      message: err instanceof AppError
-        ? err.message
-        : 'An unexpected error occurred. Please try again.',
+      message: isOperational ? err.message : 'An unexpected error occurred. Please try again.',
     },
   });
 }

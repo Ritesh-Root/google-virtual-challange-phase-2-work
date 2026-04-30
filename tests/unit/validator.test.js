@@ -1,5 +1,4 @@
 'use strict';
-const Joi = require('joi');
 const { chatSchema, calendarSchema, validate } = require('../../src/middleware/validator');
 
 describe('Validator Middleware', () => {
@@ -56,10 +55,7 @@ describe('Validator Middleware', () => {
     });
 
     test('strips unknown fields', () => {
-      const { value } = chatSchema.validate(
-        { message: 'Hi', malicious: 'field' },
-        { stripUnknown: true }
-      );
+      const { value } = chatSchema.validate({ message: 'Hi', malicious: 'field' }, { stripUnknown: true });
       expect(value.malicious).toBeUndefined();
     });
   });

@@ -23,7 +23,7 @@ const chatSchema = Joi.object({
   sessionId: Joi.string().max(LIMITS.MAX_SESSION_ID_LENGTH).optional().allow(null, ''),
   language: Joi.string().valid('en', 'hi').default('en'),
   detailLevel: Joi.string().valid('simple', 'standard', 'detailed').default('standard'),
-});
+}).required();
 
 /**
  * Calendar reminder validation schema.
@@ -31,7 +31,7 @@ const chatSchema = Joi.object({
  */
 const calendarSchema = Joi.object({
   state: Joi.string().max(50).optional().allow('', null),
-});
+}).required();
 
 /**
  * Express middleware factory for Joi validation.
@@ -40,6 +40,10 @@ const calendarSchema = Joi.object({
  */
 function validate(schema) {
   return (req, res, next) => {
+    if (req.body === undefined) {
+      return next(new ValidationError('Request body must be a JSON object'));
+    }
+
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,

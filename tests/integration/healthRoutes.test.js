@@ -41,4 +41,54 @@ describe('Health Routes', () => {
     expect(res.body.data.timestamp).toBeDefined();
     expect(new Date(res.body.data.timestamp)).toBeInstanceOf(Date);
   });
+
+  // ===== NEW TESTS =====
+
+  test('GET /api/v1/health — includes memory usage', async () => {
+    const res = await request(app).get('/api/v1/health').expect(200);
+
+    expect(res.body.data.memoryUsage).toBeDefined();
+    expect(res.body.data.memoryUsage.rss).toBeDefined();
+    expect(res.body.data.memoryUsage.heapUsed).toBeDefined();
+  });
+
+  test('GET /api/v1/health — includes uptime formatted', async () => {
+    const res = await request(app).get('/api/v1/health').expect(200);
+
+    expect(res.body.data.uptimeFormatted).toBeDefined();
+    expect(res.body.data.uptimeFormatted).toMatch(/\d+h \d+m \d+s/);
+  });
+
+  test('GET /api/v1/health — includes topic count', async () => {
+    const res = await request(app).get('/api/v1/health').expect(200);
+
+    expect(res.body.data.knowledgeBase.topicCount).toBeDefined();
+    expect(res.body.data.knowledgeBase.topicCount).toBeGreaterThan(0);
+  });
+
+  test('GET /api/v1/health — includes node version', async () => {
+    const res = await request(app).get('/api/v1/health').expect(200);
+
+    expect(res.body.data.nodeVersion).toBeDefined();
+    expect(res.body.data.nodeVersion).toMatch(/^v\d+/);
+  });
+
+  test('GET /api/v1/health — includes environment', async () => {
+    const res = await request(app).get('/api/v1/health').expect(200);
+
+    expect(res.body.data.environment).toBeDefined();
+  });
+
+  test('GET /api/v1/health — includes Cache-Control no-cache header', async () => {
+    const res = await request(app).get('/api/v1/health').expect(200);
+
+    expect(res.headers['cache-control']).toContain('no-cache');
+  });
+
+  test('GET /api/v1/health — includes security headers', async () => {
+    const res = await request(app).get('/api/v1/health').expect(200);
+
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['content-security-policy']).toBeDefined();
+  });
 });

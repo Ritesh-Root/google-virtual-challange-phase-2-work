@@ -16,7 +16,13 @@ describe('GeminiService', () => {
     test('returns valid response contract for election query', async () => {
       const result = await geminiService.generateResponse(
         'eligibility',
-        { age: 18, location: { state: 'Maharashtra' }, voterStatus: 'first_time', preferredLanguage: 'en', detailLevel: 'standard' },
+        {
+          age: 18,
+          location: { state: 'Maharashtra' },
+          voterStatus: 'first_time',
+          preferredLanguage: 'en',
+          detailLevel: 'standard',
+        },
         { title: 'Eligibility', summary: 'Test' },
         'Can I vote?'
       );
@@ -40,7 +46,14 @@ describe('GeminiService', () => {
     test('handles context with null age and election type', async () => {
       const result = await geminiService.generateResponse(
         'faq',
-        { age: null, location: {}, voterStatus: 'unknown', electionType: null, preferredLanguage: 'en', detailLevel: 'standard' },
+        {
+          age: null,
+          location: {},
+          voterStatus: 'unknown',
+          electionType: null,
+          preferredLanguage: 'en',
+          detailLevel: 'standard',
+        },
         { title: 'FAQ', summary: 'General' },
         'What is NOTA?'
       );
@@ -58,8 +71,17 @@ describe('GeminiService', () => {
 
     test('returns a valid intent for election queries', async () => {
       const result = await geminiService.classifyIntent('How do I register to vote?');
-      expect(['eligibility', 'registration', 'timeline', 'voting_day', 'documents', 'faq', 'calendar', 'greeting', 'unsupported'])
-        .toContain(result.intent);
+      expect([
+        'eligibility',
+        'registration',
+        'timeline',
+        'voting_day',
+        'documents',
+        'faq',
+        'calendar',
+        'greeting',
+        'unsupported',
+      ]).toContain(result.intent);
     });
   });
 
@@ -85,7 +107,8 @@ describe('GeminiService', () => {
     });
 
     test('handles embedded JSON with regex fallback', () => {
-      const messyResponse = 'Here is the response: {"answer_summary": "Extracted", "confidence": "medium", "disclaimer": "test"}';
+      const messyResponse =
+        'Here is the response: {"answer_summary": "Extracted", "confidence": "medium", "disclaimer": "test"}';
       const result = geminiService._parseResponse(messyResponse, {});
       expect(result.answer_summary).toBe('Extracted');
     });
@@ -124,7 +147,9 @@ describe('GeminiService', () => {
 
     test('handles response where regex also fails', () => {
       // No JSON-like content at all
-      const result = geminiService._parseResponse('Plain text with no braces', { sources: [{ title: 'ECI', url: 'https://eci.gov.in' }] });
+      const result = geminiService._parseResponse('Plain text with no braces', {
+        sources: [{ title: 'ECI', url: 'https://eci.gov.in' }],
+      });
       expect(result.answer_summary).toBe('Plain text with no braces');
       expect(result.sources[0].title).toBe('ECI');
     });
@@ -133,12 +158,7 @@ describe('GeminiService', () => {
   describe('_buildFallbackResponse', () => {
     test('builds response with actions from structured data', () => {
       const data = {
-        actions: [
-          { action: 'Step 1' },
-          { action: 'Step 2' },
-          { action: 'Step 3' },
-          { action: 'Step 4' },
-        ],
+        actions: [{ action: 'Step 1' }, { action: 'Step 2' }, { action: 'Step 3' }, { action: 'Step 4' }],
         sources: [{ title: 'ECI', url: 'https://eci.gov.in' }],
       };
 
