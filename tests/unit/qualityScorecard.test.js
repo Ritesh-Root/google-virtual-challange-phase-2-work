@@ -17,7 +17,9 @@ describe('QualityScorecard', () => {
 
     expect(scorecard.schemaVersion).toMatch(/^\d+\.\d+\.\d+$/);
     expect(scorecard.lastVerifiedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(scorecard.generatedAt).toBeUndefined();
+    expect(scorecard.generatedFrom).toEqual(expect.arrayContaining(['package.json']));
+    expect(scorecard.verification.scorecardMode).toBe('runtime_metadata');
+    expect(scorecard.verification.coverageThresholds.statements).toBeGreaterThanOrEqual(80);
     scorecard.criteria.forEach((criterion) => {
       expect(Array.isArray(criterion.sourceRefs)).toBe(true);
       expect(criterion.sourceRefs.length).toBeGreaterThan(0);

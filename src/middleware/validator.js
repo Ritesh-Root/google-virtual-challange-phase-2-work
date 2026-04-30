@@ -31,6 +31,10 @@ const chatSchema = Joi.object({
  */
 const calendarSchema = Joi.object({
   state: Joi.string().max(50).optional().allow('', null),
+  electionDate: Joi.string()
+    .pattern(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  daysUntilElection: Joi.number().integer().min(0).max(3650).optional(),
 }).required();
 
 /**
@@ -53,7 +57,7 @@ function validate(schema) {
       return next(new ValidationError(message));
     }
     req.validatedBody = value;
-    next();
+    return next();
   };
 }
 

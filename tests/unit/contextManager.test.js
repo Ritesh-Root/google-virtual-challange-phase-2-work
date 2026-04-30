@@ -25,9 +25,10 @@ describe('ContextManager', () => {
       expect(slots).toBeDefined();
     });
 
-    test('creates new session for unknown ID', () => {
+    test('replaces unknown caller-supplied IDs with server-minted token', () => {
       const { sessionId } = contextManager.getOrCreate('unknown-id-123');
-      expect(sessionId).toBe('unknown-id-123');
+      expect(sessionId).not.toBe('unknown-id-123');
+      expect(sessionId).toContain('.');
     });
   });
 
@@ -104,6 +105,12 @@ describe('ContextManager', () => {
       expect(slots.daysUntilElection).toBe(5);
     });
 
+    test('extracts ISO election date', () => {
+      const { sessionId } = contextManager.getOrCreate();
+      const slots = contextManager.updateFromMessage(sessionId, 'Election is on 2026-05-31');
+      expect(slots.electionDate).toBe('2026-05-31');
+    });
+
     test('handles empty message gracefully', () => {
       const { sessionId } = contextManager.getOrCreate();
       const slots = contextManager.updateFromMessage(sessionId, '');
@@ -122,8 +129,8 @@ describe('ContextManager', () => {
 
     test('returns null for eligibility when age is set', () => {
       const { sessionId } = contextManager.getOrCreate();
-      contextManager.updateFromMessage(sessionId, 'I am 20 years old');
-      const result = contextManager.getMissingSlotQuestion(sessionId, 'eligibility');
+      const slots = contextManager.updateFromMessage(sessionId, 'I am 20 years old');
+      const result = contextManager.getMissingSlotQuestion(slots, 'eligibility');
       expect(result).toBeNull();
     });
 
@@ -143,8 +150,8 @@ describe('ContextManager', () => {
 
     test('asks for registration status before readiness scoring when age is known', () => {
       const { sessionId } = contextManager.getOrCreate();
-      contextManager.updateFromMessage(sessionId, 'I am 22');
-      const result = contextManager.getMissingSlotQuestion(sessionId, 'readiness');
+      const slots = contextManager.updateFromMessage(sessionId, 'I am 22');
+      const result = contextManager.getMissingSlotQuestion(slots, 'readiness');
       expect(result).not.toBeNull();
       expect(result.slotName).toBe('voterStatus');
     });
@@ -157,10 +164,9 @@ describe('ContextManager', () => {
   });
 
   describe('getSessionCount', () => {
-    test('returns number of active sessions', () => {
+    test('returns zero because session context is stateless', () => {
       const count = contextManager.getSessionCount();
-      expect(typeof count).toBe('number');
-      expect(count).toBeGreaterThanOrEqual(0);
+      expect(count).toBe(0);
     });
   });
 });

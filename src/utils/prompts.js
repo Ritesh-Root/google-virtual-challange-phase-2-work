@@ -57,11 +57,9 @@ const TOPIC_PROMPTS = Object.freeze({
   eligibility:
     'Explain voter eligibility in India: age, citizenship, residency requirements, and disqualification conditions.',
   registration:
-    'Walk through the complete voter registration process: online (voters.eci.gov.in), offline (Form 6), required documents, and tracking.',
-  timeline:
-    'Explain the 9 phases of an Indian election from schedule announcement to results declaration, with typical durations.',
-  voting_day:
-    'Describe the step-by-step polling booth experience from entry to exit: ID verification, ink, EVM, VVPAT, and exit.',
+    'Walk through voter registration: online (voters.eci.gov.in), offline (Form 6), documents, and tracking.',
+  timeline: 'Explain the 9 phases of an Indian election from schedule announcement to results, with typical durations.',
+  voting_day: 'Describe the polling booth experience from entry to exit: ID verification, ink, EVM, VVPAT, and exit.',
   documents: 'List all documents needed for voter registration and for voting day, including acceptable photo IDs.',
   evm_vvpat: 'Explain how EVMs and VVPAT work, their security features, and the verification process.',
   model_code: 'Explain the Model Code of Conduct: when it applies, what it restricts, and enforcement mechanisms.',

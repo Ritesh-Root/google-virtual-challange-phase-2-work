@@ -18,8 +18,8 @@ const routes = require('./routes');
  */
 const app = express();
 
-// Trust proxy for Cloud Run (required for correct IP in rate limiting and logging)
-app.set('trust proxy', 1);
+// Trust proxy only when the deployment explicitly enables a trusted proxy chain.
+app.set('trust proxy', config.trustProxy ? 1 : false);
 
 // Disable X-Powered-By header (defense-in-depth, also done by Helmet)
 app.disable('x-powered-by');
@@ -30,8 +30,8 @@ app.use(securityMiddleware());
 // Structured request logging and correlation ID must run before middleware that can reject requests
 app.use(requestLogger);
 
-// Rate limiting — applied before body parsing for efficiency
-app.use(rateLimiter);
+// Rate limiting — API-only so static assets cannot exhaust chat quota
+app.use('/api', rateLimiter);
 
 // Body parsing with strict size limit (defense against payload DoS)
 app.use(express.json({ limit: config.bodyLimit }));

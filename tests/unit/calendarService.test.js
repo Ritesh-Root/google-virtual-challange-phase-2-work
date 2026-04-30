@@ -38,38 +38,67 @@ describe('CalendarService', () => {
   });
 
   describe('generateElectionReminders', () => {
-    test('returns 4 milestones', () => {
+    test('returns no dated milestones without a verified election date', () => {
       const reminders = calendarService.generateElectionReminders({});
+      expect(reminders).toHaveLength(0);
+    });
+
+    test('returns future milestones from an explicit election date', () => {
+      const reminders = calendarService.generateElectionReminders(
+        { electionDate: '2026-05-31' },
+        { now: new Date('2026-05-01T00:00:00Z') }
+      );
       expect(reminders).toHaveLength(4);
     });
 
     test('each reminder has title, description, and link', () => {
-      const reminders = calendarService.generateElectionReminders({});
+      const reminders = calendarService.generateElectionReminders(
+        { electionDate: '2026-05-31' },
+        { now: new Date('2026-05-01T00:00:00Z') }
+      );
       reminders.forEach((r) => {
         expect(r.title).toBeDefined();
         expect(r.description).toBeDefined();
+        expect(r.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(r.link).toContain('calendar.google.com');
       });
     });
 
     test('uses state name in descriptions', () => {
-      const reminders = calendarService.generateElectionReminders({
-        location: { state: 'Kerala' },
-      });
+      const reminders = calendarService.generateElectionReminders(
+        {
+          electionDate: '2026-05-31',
+          location: { state: 'Kerala' },
+        },
+        { now: new Date('2026-05-01T00:00:00Z') }
+      );
 
       const hasState = reminders.some((r) => r.description.includes('Kerala'));
       expect(hasState).toBe(true);
     });
 
     test('uses default text when no state', () => {
-      const reminders = calendarService.generateElectionReminders({});
+      const reminders = calendarService.generateElectionReminders(
+        { electionDate: '2026-05-31' },
+        { now: new Date('2026-05-01T00:00:00Z') }
+      );
       const hasDefault = reminders.some((r) => r.description.includes('your constituency'));
       expect(hasDefault).toBe(true);
     });
 
-    test('handles null context', () => {
+    test('handles null context without inventing dates', () => {
       const reminders = calendarService.generateElectionReminders(null);
-      expect(reminders).toHaveLength(4);
+      expect(reminders).toHaveLength(0);
+    });
+
+    test('derives election day from daysUntilElection', () => {
+      const reminders = calendarService.generateElectionReminders(
+        { daysUntilElection: 30 },
+        { now: new Date('2026-05-01T00:00:00Z') }
+      );
+
+      expect(reminders.map((item) => item.date)).toContain('2026-05-31');
+      expect(new Set(reminders.map((item) => item.date)).size).toBeGreaterThan(1);
     });
   });
 
@@ -99,15 +128,12 @@ describe('CalendarService', () => {
       expect(result).toMatch(/\d{8}T\d{6}Z/);
     });
 
-    test('handles invalid date string with fallback', () => {
-      const result = calendarService._formatDate('not-a-date');
-      expect(result).toContain('/');
-      expect(result).toMatch(/\d{8}T\d{6}Z/);
+    test('rejects invalid date string instead of falling back to today', () => {
+      expect(() => calendarService._formatDate('not-a-date')).toThrow('invalid calendar date');
     });
 
-    test('handles empty string with fallback', () => {
-      const result = calendarService._formatDate('');
-      expect(result).toContain('/');
+    test('rejects empty string instead of falling back to today', () => {
+      expect(() => calendarService._formatDate('')).toThrow('invalid calendar date');
     });
   });
 

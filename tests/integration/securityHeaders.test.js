@@ -8,6 +8,10 @@ const app = require('../../src/app');
  * These tests ensure compliance with defense-in-depth requirements.
  */
 describe('Security Headers and Policies', () => {
+  test('does not trust forwarded IP headers unless explicitly configured', () => {
+    expect(app.get('trust proxy')).toBe(false);
+  });
+
   test('includes Content-Security-Policy header', async () => {
     const res = await request(app).get('/api/v1/health').expect(200);
     expect(res.headers['content-security-policy']).toBeDefined();
@@ -76,6 +80,15 @@ describe('Security Headers and Policies', () => {
     const res = await request(app).get('/api/v1/health').set('X-Request-ID', customId).expect(200);
 
     expect(res.headers['x-request-id']).toBe(customId);
+  });
+
+  test('static asset requests do not consume API chat quota', async () => {
+    const staticRequests = Array.from({ length: 105 }, () => request(app).get('/js/app.js'));
+    const staticResponses = await Promise.all(staticRequests);
+    expect(staticResponses.every((res) => res.statusCode === 200)).toBe(true);
+
+    const chatRes = await request(app).post('/api/v1/chat').send({ message: 'Hello after assets' }).expect(200);
+    expect(chatRes.body.success).toBe(true);
   });
 });
 

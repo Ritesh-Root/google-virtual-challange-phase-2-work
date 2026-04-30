@@ -4,7 +4,10 @@ const app = require('../../src/app');
 
 describe('Calendar Routes', () => {
   test('POST /api/v1/calendar/reminders — returns reminder links', async () => {
-    const res = await request(app).post('/api/v1/calendar/reminders').send({ state: 'Maharashtra' }).expect(200);
+    const res = await request(app)
+      .post('/api/v1/calendar/reminders')
+      .send({ state: 'Maharashtra', electionDate: '2026-05-31' })
+      .expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.reminders).toBeDefined();
@@ -14,6 +17,7 @@ describe('Calendar Routes', () => {
     const reminder = res.body.data.reminders[0];
     expect(reminder.title).toBeDefined();
     expect(reminder.description).toBeDefined();
+    expect(reminder.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(reminder.link).toContain('calendar.google.com');
   });
 
@@ -25,10 +29,19 @@ describe('Calendar Routes', () => {
     expect(res.body.data.mapLink).toContain('Delhi');
   });
 
-  test('POST /api/v1/calendar/reminders — works without state', async () => {
+  test('POST /api/v1/calendar/reminders — does not invent dates without election context', async () => {
     const res = await request(app).post('/api/v1/calendar/reminders').send({}).expect(200);
 
     expect(res.body.success).toBe(true);
+    expect(res.body.data.reminders).toEqual([]);
+    expect(res.body.data.dateStatus).toBe('unavailable');
+  });
+
+  test('POST /api/v1/calendar/reminders — supports daysUntilElection context', async () => {
+    const res = await request(app).post('/api/v1/calendar/reminders').send({ daysUntilElection: 30 }).expect(200);
+
+    expect(res.body.success).toBe(true);
     expect(res.body.data.reminders.length).toBeGreaterThan(0);
+    expect(res.body.data.dateStatus).toBe('verified_from_user_context');
   });
 });

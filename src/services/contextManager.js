@@ -11,10 +11,7 @@ const { INDIAN_STATES, VOTER_STATUS, ELECTION_TYPES } = require('../utils/consta
  */
 class ContextManager {
   constructor() {
-    /** @private @type {Map<string, {slots: Object, lastAccess: number}>} */
-    this.sessions = new Map();
-    this._cleanupTimer = null;
-    this._startCleanupInterval();
+    this.tokenVersion = 1;
   }
 
   /**
@@ -23,30 +20,13 @@ class ContextManager {
    * @returns {{ sessionId: string, slots: Object }}
    */
   getOrCreate(sessionId) {
-    if (sessionId && this.sessions.has(sessionId)) {
-      const session = this.sessions.get(sessionId);
-      session.lastAccess = Date.now();
-      return { sessionId, slots: session.slots };
+    const decoded = this._decodeSessionId(sessionId);
+    if (decoded) {
+      return { sessionId, slots: decoded };
     }
 
-    // Enforce max sessions limit to prevent memory exhaustion
-    if (this.sessions.size >= config.maxSessions) {
-      this._evictOldest();
-    }
-
-    const newId = sessionId || crypto.randomUUID();
-    const slots = {
-      location: { country: 'India', state: null },
-      age: null,
-      voterStatus: VOTER_STATUS.UNKNOWN,
-      electionType: null,
-      preferredLanguage: config.defaultLanguage,
-      detailLevel: 'standard',
-      daysUntilElection: null,
-    };
-
-    this.sessions.set(newId, { slots, lastAccess: Date.now() });
-    return { sessionId: newId, slots };
+    const slots = this._defaultSlots();
+    return { sessionId: this.createSessionId(slots), slots };
   }
 
   /**
@@ -57,6 +37,16 @@ class ContextManager {
    */
   updateFromMessage(sessionId, message) {
     const { slots } = this.getOrCreate(sessionId);
+    return this.updateSlotsFromMessage(slots, message);
+  }
+
+  /**
+   * Extract and update context slots in an existing slot object.
+   * @param {Object} slots - Mutable session slot object
+   * @param {string} message - Raw user message
+   * @returns {Object} Updated slots
+   */
+  updateSlotsFromMessage(slots, message) {
     const lower = (message || '').toLowerCase();
 
     // Extract age from patterns like "18 years old", "turned 18", "age 18"
@@ -115,6 +105,11 @@ class ContextManager {
       slots.daysUntilElection = parseInt(inDaysMatch[1], 10);
     }
 
+    const isoDateMatch = lower.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+    if (isoDateMatch) {
+      slots.electionDate = isoDateMatch[1];
+    }
+
     return slots;
   }
 
@@ -126,7 +121,7 @@ class ContextManager {
    * @returns {{ slotName: string, question: string }|null}
    */
   getMissingSlotQuestion(sessionId, intent) {
-    const { slots } = this.getOrCreate(sessionId);
+    const slots = typeof sessionId === 'object' && sessionId !== null ? sessionId : this.getOrCreate(sessionId).slots;
 
     const requirements = {
       eligibility: [
@@ -177,48 +172,103 @@ class ContextManager {
    * @returns {number}
    */
   getSessionCount() {
-    return this.sessions.size;
-  }
-
-  /** @private Evict the oldest session when limit is reached. */
-  _evictOldest() {
-    let oldestKey = null;
-    let oldestTime = Infinity;
-    for (const [key, val] of this.sessions) {
-      if (val.lastAccess < oldestTime) {
-        oldestTime = val.lastAccess;
-        oldestKey = key;
-      }
-    }
-    if (oldestKey) {
-      this.sessions.delete(oldestKey);
-    }
-  }
-
-  /** @private Start periodic cleanup of expired sessions. */
-  _startCleanupInterval() {
-    this._cleanupTimer = setInterval(() => {
-      const cutoff = Date.now() - config.sessionTtlMs;
-      for (const [key, val] of this.sessions) {
-        if (val.lastAccess < cutoff) {
-          this.sessions.delete(key);
-        }
-      }
-    }, config.sessionCleanupIntervalMs);
-    // Allow process to exit even if timer is active
-    if (this._cleanupTimer.unref) {
-      this._cleanupTimer.unref();
-    }
+    return 0;
   }
 
   /**
-   * Destroy cleanup interval (for tests).
+   * Issue an opaque, signed session token containing only non-secret context slots.
+   * @param {Object} slots - Session context slots
+   * @returns {string} Signed session token
    */
-  destroy() {
-    if (this._cleanupTimer) {
-      clearInterval(this._cleanupTimer);
-      this._cleanupTimer = null;
+  createSessionId(slots) {
+    const now = Date.now();
+    const payload = {
+      v: this.tokenVersion,
+      iat: now,
+      exp: now + config.sessionTtlMs,
+      slots: this._normalizeSlots(slots),
+    };
+    const encoded = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+    return `${encoded}.${this._sign(encoded)}`;
+  }
+
+  /**
+   * Destroy cleanup interval (kept for tests/backwards compatibility).
+   */
+  destroy() {}
+
+  /** @private Build default slots. */
+  _defaultSlots() {
+    return {
+      location: { country: 'India', state: null },
+      age: null,
+      voterStatus: VOTER_STATUS.UNKNOWN,
+      electionType: null,
+      preferredLanguage: config.defaultLanguage,
+      detailLevel: 'standard',
+      daysUntilElection: null,
+      electionDate: null,
+    };
+  }
+
+  /** @private Normalize untrusted decoded slot data. */
+  _normalizeSlots(slots) {
+    const base = this._defaultSlots();
+    const input = slots && typeof slots === 'object' ? slots : {};
+    const normalized = {
+      ...base,
+      age: typeof input.age === 'number' && input.age >= 0 && input.age <= 130 ? input.age : base.age,
+      voterStatus: Object.values(VOTER_STATUS).includes(input.voterStatus) ? input.voterStatus : base.voterStatus,
+      electionType: Object.values(ELECTION_TYPES).includes(input.electionType) ? input.electionType : base.electionType,
+      preferredLanguage: config.supportedLanguages.includes(input.preferredLanguage)
+        ? input.preferredLanguage
+        : base.preferredLanguage,
+      detailLevel: ['simple', 'standard', 'detailed'].includes(input.detailLevel)
+        ? input.detailLevel
+        : base.detailLevel,
+      daysUntilElection:
+        typeof input.daysUntilElection === 'number' && input.daysUntilElection >= 0 ? input.daysUntilElection : null,
+      electionDate: this._isIsoDate(input.electionDate) ? input.electionDate : null,
+      location: { ...base.location },
+    };
+
+    if (input.location && typeof input.location === 'object') {
+      normalized.location.state =
+        typeof input.location.state === 'string' && input.location.state.length <= 80 ? input.location.state : null;
     }
+
+    return normalized;
+  }
+
+  /** @private Decode and verify a signed session token. */
+  _decodeSessionId(sessionId) {
+    if (typeof sessionId !== 'string' || !sessionId.includes('.')) {
+      return null;
+    }
+    const [encoded, signature] = sessionId.split('.');
+    if (!encoded || !signature || this._sign(encoded) !== signature) {
+      return null;
+    }
+
+    try {
+      const payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+      if (payload.v !== this.tokenVersion || typeof payload.exp !== 'number' || payload.exp < Date.now()) {
+        return null;
+      }
+      return this._normalizeSlots(payload.slots);
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  /** @private Sign a session token body. */
+  _sign(encoded) {
+    return crypto.createHmac('sha256', config.sessionSigningSecret).update(encoded).digest('base64url');
+  }
+
+  /** @private Validate an ISO calendar date string. */
+  _isIsoDate(value) {
+    return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
   }
 }
 

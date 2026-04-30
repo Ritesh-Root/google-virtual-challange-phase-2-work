@@ -10,7 +10,7 @@ const { initializeGemini } = require('./config/gemini');
  *
  * @module server
  */
-async function start() {
+function start() {
   try {
     // Validate required configuration
     if (!config.geminiApiKey) {

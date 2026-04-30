@@ -66,7 +66,7 @@ steps:
       - '--cpu=1'
       - '--min-instances=0'
       - '--max-instances=3'
-      - '--set-env-vars=NODE_ENV=production'
+      - '--set-env-vars=NODE_ENV=production,TRUST_PROXY=true'
       - '--set-secrets=GEMINI_API_KEY=${_GEMINI_SECRET_NAME}:latest'
     id: 'deploy'
 

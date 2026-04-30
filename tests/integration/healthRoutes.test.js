@@ -21,18 +21,16 @@ describe('Health Routes', () => {
     expect(res.body.data.knowledgeBase.version).toBeDefined();
   });
 
-  test('GET /api/v1/health — includes cache stats', async () => {
+  test('GET /api/v1/health — omits detailed cache stats from public response', async () => {
     const res = await request(app).get('/api/v1/health').expect(200);
 
-    expect(res.body.data.cache).toBeDefined();
-    expect(typeof res.body.data.cache.size).toBe('number');
-    expect(res.body.data.cache.hitRate).toBeDefined();
+    expect(res.body.data.cache).toBeUndefined();
   });
 
-  test('GET /api/v1/health — includes session count', async () => {
+  test('GET /api/v1/health — omits session count from public response', async () => {
     const res = await request(app).get('/api/v1/health').expect(200);
 
-    expect(typeof res.body.data.sessions).toBe('number');
+    expect(res.body.data.sessions).toBeUndefined();
   });
 
   test('GET /api/v1/health — includes timestamp', async () => {
@@ -44,37 +42,42 @@ describe('Health Routes', () => {
 
   // ===== NEW TESTS =====
 
-  test('GET /api/v1/health — includes memory usage', async () => {
-    const res = await request(app).get('/api/v1/health').expect(200);
+  test('GET /api/v1/health/details — includes memory usage', async () => {
+    const res = await request(app).get('/api/v1/health/details').expect(200);
 
     expect(res.body.data.memoryUsage).toBeDefined();
     expect(res.body.data.memoryUsage.rss).toBeDefined();
     expect(res.body.data.memoryUsage.heapUsed).toBeDefined();
   });
 
-  test('GET /api/v1/health — includes uptime formatted', async () => {
+  test('GET /api/v1/health — omits memory usage from public response', async () => {
     const res = await request(app).get('/api/v1/health').expect(200);
+
+    expect(res.body.data.memoryUsage).toBeUndefined();
+  });
+
+  test('GET /api/v1/health/details — includes uptime formatted', async () => {
+    const res = await request(app).get('/api/v1/health/details').expect(200);
 
     expect(res.body.data.uptimeFormatted).toBeDefined();
     expect(res.body.data.uptimeFormatted).toMatch(/\d+h \d+m \d+s/);
   });
 
-  test('GET /api/v1/health — includes topic count', async () => {
+  test('GET /api/v1/health — omits topic count from public response', async () => {
     const res = await request(app).get('/api/v1/health').expect(200);
 
-    expect(res.body.data.knowledgeBase.topicCount).toBeDefined();
-    expect(res.body.data.knowledgeBase.topicCount).toBeGreaterThan(0);
+    expect(res.body.data.knowledgeBase.topicCount).toBeUndefined();
   });
 
-  test('GET /api/v1/health — includes node version', async () => {
-    const res = await request(app).get('/api/v1/health').expect(200);
+  test('GET /api/v1/health/details — includes node version', async () => {
+    const res = await request(app).get('/api/v1/health/details').expect(200);
 
     expect(res.body.data.nodeVersion).toBeDefined();
     expect(res.body.data.nodeVersion).toMatch(/^v\d+/);
   });
 
-  test('GET /api/v1/health — includes environment', async () => {
-    const res = await request(app).get('/api/v1/health').expect(200);
+  test('GET /api/v1/health/details — includes environment', async () => {
+    const res = await request(app).get('/api/v1/health/details').expect(200);
 
     expect(res.body.data.environment).toBeDefined();
   });
@@ -98,7 +101,8 @@ describe('Health Routes', () => {
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.schemaVersion).toMatch(/^\d+\.\d+\.\d+$/);
-    expect(res.body.data.generatedAt).toBeUndefined();
+    expect(res.body.data.generatedFrom).toEqual(expect.arrayContaining(['package.json']));
+    expect(res.body.data.verification.scorecardMode).toBe('runtime_metadata');
     expect(criteria).toEqual(
       expect.arrayContaining(['code_quality', 'security', 'efficiency', 'testing', 'accessibility', 'google_services'])
     );

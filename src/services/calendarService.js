@@ -28,33 +28,24 @@ class CalendarService {
    * @param {Object} context - User context slots
    * @returns {Array<{ title: string, description: string, link: string }>}
    */
-  generateElectionReminders(context) {
+  generateElectionReminders(context, options = {}) {
     const stateText = context?.location?.state || 'your constituency';
-    const milestones = [
-      {
-        title: '📋 Check Voter Registration Status',
-        description: `Verify your name is on the electoral roll for ${stateText}. Visit voters.eci.gov.in or use the Voter Helpline App.`,
-      },
-      {
-        title: '📄 Download Voter Slip',
-        description: `Download your voter slip to find your polling booth number and address for ${stateText}.`,
-      },
-      {
-        title: '🏛️ Locate Your Polling Booth',
-        description: `Find and visit your designated polling station in ${stateText} before election day.`,
-      },
-      {
-        title: '🗳️ Election Day — Go Vote!',
-        description: 'Carry your EPIC/Voter ID. Polling hours: 7:00 AM - 6:00 PM. Your vote matters! 🇮🇳',
-      },
-    ];
+    const now = options.now instanceof Date ? options.now : new Date();
+    const electionDate = this._resolveElectionDate(context, now);
+    if (!electionDate) {
+      return [];
+    }
+
+    const milestones = this._buildMilestones(electionDate, stateText, now);
 
     return milestones.map((milestone) => ({
-      ...milestone,
+      title: milestone.title,
+      description: milestone.description,
+      date: milestone.date,
       link: this.generateCalendarLink({
         title: milestone.title.replace(/[📋📄🏛️🗳️]/g, '').trim(),
         description: milestone.description,
-        date: new Date().toISOString().split('T')[0],
+        date: milestone.date,
       }),
     }));
   }
@@ -74,14 +65,11 @@ class CalendarService {
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) {
-        // Fallback to today if date is invalid
-        const today = new Date();
-        return this._formatDateRange(today);
+        throw new Error('Invalid calendar date');
       }
       return this._formatDateRange(date);
-    } catch (_error) {
-      const today = new Date();
-      return this._formatDateRange(today);
+    } catch (error) {
+      throw new Error(`Cannot format invalid calendar date: ${error.message}`);
     }
   }
 
@@ -95,6 +83,62 @@ class CalendarService {
     const end = new Date(date);
     end.setHours(end.getHours() + 1);
     return `${fmt(date)}/${fmt(end)}`;
+  }
+
+  /** @private Resolve a verified/user-provided election date, or null when unavailable. */
+  _resolveElectionDate(context, now) {
+    if (context?.electionDate) {
+      const date = new Date(`${context.electionDate}T00:00:00Z`);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (typeof context?.daysUntilElection === 'number' && context.daysUntilElection >= 0) {
+      const date = new Date(now);
+      date.setUTCDate(date.getUTCDate() + context.daysUntilElection);
+      date.setUTCHours(0, 0, 0, 0);
+      return date;
+    }
+
+    return null;
+  }
+
+  /** @private Build future reminder milestones from a known election date. */
+  _buildMilestones(electionDate, stateText, now) {
+    const startOfToday = new Date(now);
+    startOfToday.setUTCHours(0, 0, 0, 0);
+
+    const daysBefore = (days) => {
+      const date = new Date(electionDate);
+      date.setUTCDate(date.getUTCDate() - days);
+      return date.toISOString().split('T')[0];
+    };
+
+    const candidates = [
+      {
+        title: '📋 Check Voter Registration Status',
+        description:
+          `Verify your name is on the electoral roll for ${stateText}. ` +
+          'Visit voters.eci.gov.in or use the Voter Helpline App.',
+        date: daysBefore(30),
+      },
+      {
+        title: '📄 Download Voter Slip',
+        description: `Download your voter slip to find your polling booth number and address for ${stateText}.`,
+        date: daysBefore(14),
+      },
+      {
+        title: '🏛️ Locate Your Polling Booth',
+        description: `Find and visit your designated polling station in ${stateText} before election day.`,
+        date: daysBefore(7),
+      },
+      {
+        title: '🗳️ Election Day — Go Vote!',
+        description: 'Carry your EPIC/Voter ID. Polling hours are published by ECI for each election.',
+        date: electionDate.toISOString().split('T')[0],
+      },
+    ];
+
+    return candidates.filter((milestone) => new Date(`${milestone.date}T00:00:00Z`) >= startOfToday);
   }
 }
 

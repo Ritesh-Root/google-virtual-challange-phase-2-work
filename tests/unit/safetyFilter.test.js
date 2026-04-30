@@ -391,13 +391,22 @@ describe('SafetyFilter', () => {
       expect(filtered.answer_summary).not.toMatch(/onclick/i);
     });
 
-    test('preserves valid http source URLs', () => {
+    test('rejects unapproved http source URLs', () => {
       const response = {
         answer_summary: 'Test',
         sources: [{ title: 'HTTP source', url: 'http://example.com' }],
       };
       const filtered = safetyFilter.filter(response);
-      expect(filtered.sources.length).toBe(1);
+      expect(filtered.sources).toHaveLength(0);
+    });
+
+    test('preserves approved HTTPS source URLs', () => {
+      const response = {
+        answer_summary: 'Test',
+        sources: [{ title: '<b>ECI</b>', url: 'https://eci.gov.in' }],
+      };
+      const filtered = safetyFilter.filter(response);
+      expect(filtered.sources).toEqual([{ title: 'ECI', url: 'https://eci.gov.in' }]);
     });
 
     test('does not mutate original response object', () => {

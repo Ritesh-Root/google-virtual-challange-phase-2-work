@@ -25,12 +25,26 @@ describe('Chat Routes', () => {
     expect(res.body.success).toBe(true);
   });
 
-  test('POST /api/v1/chat — returns calendar links for reminder request', async () => {
+  test('POST /api/v1/chat — refuses to invent reminder dates without election context', async () => {
     const res = await request(app).post('/api/v1/chat').send({ message: 'Remind me of election dates' }).expect(200);
 
     expect(res.body.success).toBe(true);
-    expect(res.body.data.calendarLinks).toBeDefined();
+    expect(res.body.data.calendarLinks).toEqual([]);
+    expect(res.body.data.dateStatus).toBe('unavailable');
+    expect(res.body.data.answer_summary).toContain('do not have a verified election date');
+    expect(res.body.data.mapLink).toBeDefined();
+    expect(res.body.data.mapLink).toContain('google.com/maps');
+  });
+
+  test('POST /api/v1/chat — returns calendar links when user provides election timing', async () => {
+    const res = await request(app)
+      .post('/api/v1/chat')
+      .send({ message: 'Election is in 30 days. Remind me of election dates' })
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
     expect(res.body.data.calendarLinks.length).toBeGreaterThan(0);
+    expect(res.body.data.dateStatus).toBe('verified_from_user_context');
     expect(res.body.data.mapLink).toBeDefined();
     expect(res.body.data.mapLink).toContain('google.com/maps');
   });
@@ -127,7 +141,29 @@ describe('Chat Routes', () => {
 
     const res2 = await request(app).post('/api/v1/chat').send({ message: 'How do I register?', sessionId }).expect(200);
 
-    expect(res2.body.sessionId).toBe(sessionId);
+    expect(res2.body.sessionId).toBeDefined();
+    expect(res2.body.sessionId).toContain('.');
+  });
+
+  test('POST /api/v1/chat — carries context in signed stateless session token', async () => {
+    const res1 = await request(app).post('/api/v1/chat').send({ message: 'I am 22' }).expect(200);
+
+    const res2 = await request(app)
+      .post('/api/v1/chat')
+      .send({ message: 'Am I ready to vote?', sessionId: res1.body.sessionId })
+      .expect(200);
+
+    expect(res2.body.data.answer_summary).toContain('registered');
+  });
+
+  test('POST /api/v1/chat — replaces arbitrary caller supplied session IDs', async () => {
+    const res = await request(app)
+      .post('/api/v1/chat')
+      .send({ message: 'Hello', sessionId: 'attacker-chosen-session' })
+      .expect(200);
+
+    expect(res.body.sessionId).not.toBe('attacker-chosen-session');
+    expect(res.body.sessionId).toContain('.');
   });
 
   // ===== NEW TESTS: Security Headers =====

@@ -35,6 +35,7 @@ class GeminiService {
         `  state=${context.location?.state || 'unknown'}`,
         `  voterStatus=${context.voterStatus}`,
         `  electionType=${context.electionType || 'unknown'}`,
+        `  electionDate=${context.electionDate || 'unknown'}`,
         `  language=${context.preferredLanguage}`,
         `  detailLevel=${context.detailLevel}`,
         '',
@@ -99,7 +100,8 @@ Classify the following user message into one of these intents:
 
 User message: "${message}"
 
-Classify this message. If it's related to Indian elections in any way, choose the most relevant intent. Only use 'unsupported' for completely unrelated topics.`;
+Classify this message. If it is related to Indian elections in any way, choose the most relevant intent.
+Only use 'unsupported' for completely unrelated topics.`;
 
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();

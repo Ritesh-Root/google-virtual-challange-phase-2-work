@@ -90,7 +90,11 @@ class SafetyFilter {
       /which party (is|should|will)/i,
       /support (which|what) (party|candidate)/i,
       /who (do you|should i) (vote|support|choose)/i,
-      /\b(bjp|congress|inc|aap|tmc|bsp|sp|ncp|shiv sena|shivsena|jdu|rjd|dmk|aiadmk|cpim|cpi|ysrcp|brs|jmm|jds|tdp|bss|ljp|akali dal|iuml|mim|aimim)\b/i,
+      new RegExp(
+        '\\b(bjp|congress|inc|aap|tmc|bsp|sp|ncp|shiv sena|shivsena|jdu|rjd|dmk|' +
+          'aiadmk|cpim|cpi|ysrcp|brs|jmm|jds|tdp|bss|ljp|akali dal|iuml|mim|aimim)\\b',
+        'i'
+      ),
     ];
   }
 
@@ -128,11 +132,14 @@ class SafetyFilter {
       filtered.follow_up_suggestions = filtered.follow_up_suggestions.map((s) => this._sanitizeHtml(s));
     }
 
-    // Validate source URLs — only allow http/https protocols
+    // Validate source URLs against a small civic/Google allowlist.
     if (filtered.sources) {
-      filtered.sources = filtered.sources.filter(
-        (s) => s.url && (s.url.startsWith('https://') || s.url.startsWith('http://'))
-      );
+      filtered.sources = filtered.sources
+        .filter((source) => this._isAllowedSourceUrl(source?.url))
+        .map((source) => ({
+          title: this._sanitizeHtml(source.title || 'Source'),
+          url: source.url,
+        }));
     }
 
     return filtered;
@@ -174,7 +181,8 @@ class SafetyFilter {
         return {
           isPolitical: true,
           redirectMessage:
-            'As an impartial education assistant, I focus on the electoral process rather than specific parties or candidates. How can I help you understand the election process?',
+            'As an impartial education assistant, I focus on the electoral process rather than specific parties ' +
+            'or candidates. How can I help you understand the election process?',
         };
       }
     }
@@ -203,6 +211,19 @@ class SafetyFilter {
       .replace(/on\w+\s*=/gi, '') // Remove event handlers
       .replace(/expression\s*\(/gi, '') // Remove CSS expressions
       .replace(/url\s*\(\s*['"]?\s*javascript/gi, ''); // Remove CSS url(javascript:)
+  }
+
+  /** @private Validate source URLs for civic information and Google integrations. */
+  _isAllowedSourceUrl(url) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:') {
+        return false;
+      }
+      return ['eci.gov.in', 'voters.eci.gov.in', 'calendar.google.com'].includes(parsed.hostname);
+    } catch (_error) {
+      return false;
+    }
   }
 }
 

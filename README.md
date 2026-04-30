@@ -5,7 +5,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)](https://nodejs.org)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.5%20Flash-4285F4?logo=google)](https://ai.google.dev)
 [![Cloud Run](https://img.shields.io/badge/Cloud%20Run-Deployed-4285F4?logo=google-cloud)](https://cloud.google.com/run)
-[![Tests](https://img.shields.io/badge/Tests-407%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-418%20passing-brightgreen)](tests/)
 [![License](https://img.shields.io/badge/License-ISC-blue)](LICENSE)
 
 ---
@@ -69,12 +69,12 @@
 | 🤖 Intelligent Chat | Understands voter questions via hybrid NLU | **Gemini 2.5 Flash** |
 | 📋 Personalized Checklists | Step-by-step voter registration & preparation | Deterministic Engine |
 | ✅ Voter Readiness Score | 0-100 readiness score with blockers and next actions | Deterministic Engine |
-| 📅 Calendar Reminders | One-click Google Calendar event creation | **Google Calendar** |
+| 📅 Calendar Reminders | Google Calendar links only when a verified election date is known or supplied | **Google Calendar** |
 | 📍 Polling Booth Finder | Direct Google Maps search for nearest booth | **Google Maps** |
 | 🌐 Multilingual | English ↔ Hindi with Gemini translation | **Gemini 2.5 Flash** |
 | ♿ WCAG 2.1 AA | Screen reader, keyboard nav, high contrast, font sizing | Frontend |
 | 🔒 Defense-in-Depth | 3-layer security: regex + model safety + output sanitization | Application |
-| 📈 Quality Scorecard | Machine-readable rubric evidence via `/api/v1/quality-scorecard` | Application |
+| 📈 Quality Scorecard | Runtime metadata-backed rubric evidence via `/api/v1/quality-scorecard` | Application |
 | ⚡ Offline App Shell | Service worker caches static UI assets; API responses are never cached | Browser PWA |
 | 📊 Cloud Logging | Structured JSON with severity levels + Cloud Trace | **Cloud Logging** |
 | 🚀 Cloud Run Deploy | Serverless container with auto-scaling + HTTPS | **Cloud Run** |
@@ -93,7 +93,7 @@
 | **Cloud Logging** | Structured JSON logging with severity levels | `src/middleware/requestLogger.js` |
 | **Cloud Error Reporting** | Automated error aggregation and alerting | `src/middleware/errorHandler.js` |
 | **Cloud Trace** | Distributed request tracing via X-Cloud-Trace-Context | `src/middleware/requestLogger.js` |
-| **Google Calendar** | Deep-link URL generation for election reminders | `src/services/calendarService.js` |
+| **Google Calendar** | Verified-date deep-link generation for election reminders | `src/services/calendarService.js` |
 | **Google Maps** | Deep-link URL generation for polling booth search | `src/services/calendarService.js` |
 | **Google Fonts** | Inter typeface for typography | `public/index.html` |
 
@@ -169,7 +169,7 @@ npm run dev
 ### Run Tests
 
 ```bash
-npm test                    # Run all 407 tests
+npm test                    # Run all 418 tests
 npm run test:coverage       # Run with coverage report
 npm run lint                # Run ESLint (src, tests, public JS)
 npm run validate            # Run lint + format check + tests
@@ -253,10 +253,10 @@ electionguide-ai/
 
 ## 📊 Test Coverage
 
-- **407 tests** across **23 suites** (unit, integration, scenario, frontend)
+- **418 tests** across **23 suites** (unit, integration, scenario, frontend)
 - **91%+ statement coverage**, 80%+ branch coverage
 - Coverage thresholds enforced: ≥89% statements/lines, ≥90% functions, ≥80% branches
-- Tests cover: security headers, injection patterns, accessibility, API contracts, error handling, service worker behavior, quality scorecard
+- Tests cover: security headers, signed stateless sessions, injection patterns, accessibility, API contracts, error handling, service worker behavior, quality scorecard
 - No external API calls in tests (fully mocked Gemini)
 
 ```bash

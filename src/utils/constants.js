@@ -60,7 +60,7 @@ const URGENCY_THRESHOLDS = Object.freeze({
 /** Maximum input lengths and UI constants. */
 const LIMITS = Object.freeze({
   MAX_MESSAGE_LENGTH: 500,
-  MAX_SESSION_ID_LENGTH: 64,
+  MAX_SESSION_ID_LENGTH: 2048,
   MIN_MESSAGE_LENGTH: 1,
   DEBOUNCE_MS: 300,
   TOUCH_TARGET_PX: 44,

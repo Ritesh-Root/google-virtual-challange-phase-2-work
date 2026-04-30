@@ -1,6 +1,16 @@
 'use strict';
 require('dotenv').config();
 
+const nodeEnv = process.env.NODE_ENV || 'development';
+const isProd = nodeEnv === 'production';
+
+function parseCsv(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 /**
  * Central application configuration.
  * All values sourced from environment variables with safe defaults.
@@ -30,10 +40,13 @@ require('dotenv').config();
  */
 module.exports = Object.freeze({
   port: parseInt(process.env.PORT, 10) || 8080,
-  nodeEnv: process.env.NODE_ENV || 'development',
-  isDev: (process.env.NODE_ENV || 'development') === 'development',
-  isProd: process.env.NODE_ENV === 'production',
+  nodeEnv,
+  isDev: nodeEnv === 'development',
+  isProd,
   geminiApiKey: process.env.GEMINI_API_KEY,
+  sessionSigningSecret: process.env.SESSION_SIGNING_SECRET || process.env.GEMINI_API_KEY || 'dev-session-secret',
+  trustProxy: ['1', 'true', 'yes'].includes(String(process.env.TRUST_PROXY || '').toLowerCase()),
+  diagnosticsToken: process.env.DIAGNOSTICS_TOKEN || '',
   rateLimitWindowMs: 15 * 60 * 1000,
   rateLimitMax: 100,
   cacheMaxSize: 200,
@@ -41,11 +54,11 @@ module.exports = Object.freeze({
   maxSessions: 1000,
   sessionTtlMs: 30 * 60 * 1000,
   sessionCleanupIntervalMs: 5 * 60 * 1000,
-  allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['*'],
+  allowedOrigins: process.env.ALLOWED_ORIGINS ? parseCsv(process.env.ALLOWED_ORIGINS) : isProd ? [] : ['*'],
   defaultLanguage: 'en',
   supportedLanguages: ['en', 'hi'],
   jurisdiction: 'India',
   bodyLimit: '10kb',
-  staticMaxAge: process.env.NODE_ENV === 'production' ? '1h' : '0',
+  staticMaxAge: isProd ? '1h' : '0',
   gcpProject: process.env.GOOGLE_CLOUD_PROJECT || 'electionguide-ai',
 });
