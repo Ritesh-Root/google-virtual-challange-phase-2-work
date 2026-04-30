@@ -32,9 +32,13 @@ class CacheService {
   generateKey(message, context) {
     const keyData = JSON.stringify({
       msg: (message || '').toLowerCase().trim(),
+      age: context?.age ?? null,
       state: context?.location?.state || null,
       status: context?.voterStatus || null,
+      electionType: context?.electionType || null,
+      daysUntilElection: context?.daysUntilElection ?? null,
       lang: context?.preferredLanguage || 'en',
+      detail: context?.detailLevel || 'standard',
     });
     return crypto.createHash('md5').update(keyData).digest('hex');
   }

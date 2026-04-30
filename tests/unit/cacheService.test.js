@@ -25,6 +25,23 @@ describe('CacheService', () => {
       expect(key1).not.toBe(key2);
     });
 
+    test('includes readiness-driving context in cache key', () => {
+      const key1 = cacheService.generateKey('Am I ready to vote?', {
+        age: null,
+        voterStatus: 'registered',
+        location: { state: 'Delhi' },
+        daysUntilElection: null,
+      });
+      const key2 = cacheService.generateKey('Am I ready to vote?', {
+        age: 22,
+        voterStatus: 'registered',
+        location: { state: 'Delhi' },
+        daysUntilElection: 30,
+      });
+
+      expect(key1).not.toBe(key2);
+    });
+
     test('normalizes case and whitespace', () => {
       const key1 = cacheService.generateKey('Hello World', {});
       const key2 = cacheService.generateKey('  hello world  ', {});

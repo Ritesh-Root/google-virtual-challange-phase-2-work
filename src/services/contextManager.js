@@ -68,6 +68,10 @@ class ContextManager {
     if (justTurnedMatch) {
       slots.age = parseInt(justTurnedMatch[2], 10);
     }
+    const selfReportedAgeMatch = lower.match(/\b(?:i\s*(?:am|'m)|im)\s+(\d{1,3})\b/i);
+    if (selfReportedAgeMatch) {
+      slots.age = parseInt(selfReportedAgeMatch[1], 10);
+    }
 
     // Extract state name
     for (const state of INDIAN_STATES) {
@@ -78,14 +82,16 @@ class ContextManager {
     }
 
     // Extract voter status
-    if (/first.time|new voter|never voted/i.test(lower)) {
-      slots.voterStatus = VOTER_STATUS.FIRST_TIME;
-    }
-    if (/already registered|have.*voter id|have.*epic/i.test(lower)) {
-      slots.voterStatus = VOTER_STATUS.REGISTERED;
-    }
     if (/\bnri\b|overseas|abroad/i.test(lower)) {
       slots.voterStatus = VOTER_STATUS.NRI;
+    } else if (
+      /first.time|new voter|never voted/i.test(lower) ||
+      /\bnot\s+(?:already\s+)?registered\b/i.test(lower) ||
+      /\b(?:do not|don't|dont)\s+have\s+(?:a\s+)?(?:voter id|epic)\b/i.test(lower)
+    ) {
+      slots.voterStatus = VOTER_STATUS.FIRST_TIME;
+    } else if (/\balready registered\b|(?:\bhave|\bgot)\s+(?:a\s+)?(?:voter id|epic)\b/i.test(lower)) {
+      slots.voterStatus = VOTER_STATUS.REGISTERED;
     }
 
     // Extract election type
@@ -134,6 +140,18 @@ class ContextManager {
         {
           slot: 'voterStatus',
           question: '📝 Are you a first-time voter, or are you already registered and need to update your details?',
+          check: (v) => v === VOTER_STATUS.UNKNOWN,
+        },
+      ],
+      readiness: [
+        {
+          slot: 'age',
+          question: '📝 Could you tell me your age? I need it before calculating your voter readiness score.',
+          check: (v) => v === null || v === undefined,
+        },
+        {
+          slot: 'voterStatus',
+          question: '📝 Are you already registered to vote, or do you still need to register?',
           check: (v) => v === VOTER_STATUS.UNKNOWN,
         },
       ],

@@ -7,12 +7,82 @@ const checklistGenerator = require('../services/checklistGenerator');
 const knowledgeService = require('../services/knowledgeService');
 const geminiService = require('../services/geminiService');
 const calendarService = require('../services/calendarService');
+const readinessAssessor = require('../services/readinessAssessor');
 const safetyFilter = require('../services/safetyFilter');
 const cacheService = require('../services/cacheService');
 const { NotFoundError } = require('../utils/errors');
 const { INTENTS, CONFIDENCE } = require('../utils/constants');
 
 const router = Router();
+
+/**
+ * Apply common response post-processing before returning chat data.
+ * Keeps deterministic branches on the same safety, translation, cache, and timing path.
+ *
+ * @param {Object} params - Response finalization inputs
+ * @returns {Promise<void>}
+ */
+async function finalizeChatResponse({ response, slots, cacheKey, res, sessionId, startTime }) {
+  const safeResponse = safetyFilter.filter(response);
+
+  if (slots.preferredLanguage !== 'en' && safeResponse.answer_summary) {
+    const langName = slots.preferredLanguage === 'hi' ? 'Hindi' : 'English';
+    safeResponse.answer_summary = await geminiService.translateResponse(safeResponse.answer_summary, langName);
+    if (safeResponse.detailed_explanation) {
+      safeResponse.detailed_explanation = await geminiService.translateResponse(
+        safeResponse.detailed_explanation,
+        langName
+      );
+    }
+  }
+
+  cacheService.set(cacheKey, safeResponse);
+  res.setHeader('X-Response-Time', `${Date.now() - startTime}ms`);
+  res.json({ success: true, data: safeResponse, sessionId });
+}
+
+/**
+ * Build the deterministic readiness response while keeping widget data namespaced.
+ *
+ * @param {Object} readiness - Readiness assessment result
+ * @param {Object} slots - Session context slots
+ * @returns {Object} Chat response object
+ */
+function buildReadinessResponse(readiness, slots) {
+  const isSimple = slots.detailLevel === 'simple';
+  const explanation = [
+    'Readiness factors checked:',
+    ...readiness.verified.map((item) => `- ${item}`),
+    readiness.blockers.length ? '\nBlockers to resolve:' : '',
+    ...readiness.blockers.map((item) => `- ${item}`),
+    readiness.recommendations.length ? '\nRecommended improvements:' : '',
+    ...readiness.recommendations.map((item) => `- ${item}`),
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return {
+    answer_summary: `Your voter readiness score is ${readiness.readinessScore}/100 (${readiness.statusLabel}). ${
+      readiness.nextActions[0] || 'Keep your voter details and polling booth information ready.'
+    }`,
+    detailed_explanation: isSimple ? null : explanation,
+    next_3_actions: isSimple ? readiness.nextActions.slice(0, 2) : readiness.nextActions,
+    deadlines: [],
+    sources: [{ title: 'Election Commission of India', url: 'https://eci.gov.in' }],
+    confidence: readiness.confidence,
+    follow_up_suggestions: ['I am 19 and registered in Delhi, am I ready?', 'Remind me of election dates'],
+    disclaimer: 'This is educational information, not legal advice.',
+    widgets: {
+      readiness: {
+        score: readiness.readinessScore,
+        status: readiness.statusLabel,
+        blockers: readiness.blockers,
+        recommendations: readiness.recommendations,
+        verified: readiness.verified,
+      },
+    },
+  };
+}
 
 /**
  * POST /api/v1/chat — Main conversational endpoint.
@@ -183,11 +253,30 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
         calendarLinks: reminders,
         mapLink,
       };
-      res.setHeader('X-Response-Time', `${Date.now() - startTime}ms`);
-      return res.json({ success: true, data: calendarResponse, sessionId: session.sessionId });
+      return finalizeChatResponse({
+        response: calendarResponse,
+        slots,
+        cacheKey,
+        res,
+        sessionId: session.sessionId,
+        startTime,
+      });
     }
 
-    // 9. Retrieve knowledge and generate checklist (deterministic engine)
+    // 9. Deterministic voter readiness scoring
+    if (intent === INTENTS.READINESS) {
+      const readiness = readinessAssessor.assess(slots);
+      return finalizeChatResponse({
+        response: buildReadinessResponse(readiness, slots),
+        slots,
+        cacheKey,
+        res,
+        sessionId: session.sessionId,
+        startTime,
+      });
+    }
+
+    // 10. Retrieve knowledge and generate checklist (deterministic engine)
     const knowledge = knowledgeService.retrieve(intent, slots);
     let checklist = null;
     if (intent === INTENTS.ELIGIBILITY || intent === INTENTS.REGISTRATION) {
@@ -209,10 +298,14 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
       if (faqResult) {
         const faqData = { ...faqResult, sources: [{ title: 'ECI FAQ', url: faqResult.source_url }] };
         const response = await geminiService.generateResponse(intent, slots, faqData, message);
-        const safeResponse = safetyFilter.filter(response);
-        cacheService.set(cacheKey, safeResponse);
-        res.setHeader('X-Response-Time', `${Date.now() - startTime}ms`);
-        return res.json({ success: true, data: safeResponse, sessionId: session.sessionId });
+        return finalizeChatResponse({
+          response,
+          slots,
+          cacheKey,
+          res,
+          sessionId: session.sessionId,
+          startTime,
+        });
       }
 
       // Attempt 2: LLM fallback classification (hybrid engine)
@@ -250,17 +343,19 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
           llmStructuredData,
           message
         );
-        const safeLlmResponse = safetyFilter.filter(llmResponse);
-        cacheService.set(cacheKey, safeLlmResponse);
-        res.setHeader('X-Response-Time', `${Date.now() - startTime}ms`);
-        return res.json({ success: true, data: safeLlmResponse, sessionId: session.sessionId });
+        return finalizeChatResponse({
+          response: llmResponse,
+          slots,
+          cacheKey,
+          res,
+          sessionId: session.sessionId,
+          startTime,
+        });
       }
 
       // Final fallback: static boundary response
-      res.setHeader('X-Response-Time', `${Date.now() - startTime}ms`);
-      return res.json({
-        success: true,
-        data: {
+      return finalizeChatResponse({
+        response: {
           answer_summary:
             '\uD83C\uDFDB\uFE0F I specialize in Indian election education. I can help with voter registration, election timelines, polling day processes, and more.',
           detailed_explanation:
@@ -276,32 +371,26 @@ router.post('/api/v1/chat', validate(chatSchema), async (req, res, next) => {
           follow_up_suggestions: ['How do I register to vote in India?', 'What is the election timeline?'],
           disclaimer: 'This is educational information, not legal advice.',
         },
+        slots,
+        cacheKey,
+        res,
         sessionId: session.sessionId,
+        startTime,
       });
     }
 
     // 11. Generate Gemini response (LLM wording pass on structured data)
     const response = await geminiService.generateResponse(intent, slots, structuredData, message);
 
-    // 12. Apply safety filter (Layer 3 — output sanitization)
-    const safeResponse = safetyFilter.filter(response);
-
-    // 13. Translate if language is not English
-    if (slots.preferredLanguage !== 'en' && safeResponse.answer_summary) {
-      const langName = slots.preferredLanguage === 'hi' ? 'Hindi' : 'English';
-      safeResponse.answer_summary = await geminiService.translateResponse(safeResponse.answer_summary, langName);
-      if (safeResponse.detailed_explanation) {
-        safeResponse.detailed_explanation = await geminiService.translateResponse(
-          safeResponse.detailed_explanation,
-          langName
-        );
-      }
-    }
-
-    // 14. Cache and return
-    cacheService.set(cacheKey, safeResponse);
-    res.setHeader('X-Response-Time', `${Date.now() - startTime}ms`);
-    res.json({ success: true, data: safeResponse, sessionId: session.sessionId });
+    // 12. Safety, translation, cache, and return
+    await finalizeChatResponse({
+      response,
+      slots,
+      cacheKey,
+      res,
+      sessionId: session.sessionId,
+      startTime,
+    });
   } catch (error) {
     next(error);
   }

@@ -35,6 +35,21 @@ describe('IntentRouter', () => {
       expect(result.intent).toBe('registration');
     });
 
+    test('routes voter checklist requests to registration guidance', () => {
+      const result = intentRouter.classify('Show my voter checklist');
+      expect(result.intent).toBe('registration');
+    });
+
+    test('does not route generic action plans to readiness scoring', () => {
+      const result = intentRouter.classify('Build an action plan');
+      expect(result.intent).not.toBe('readiness');
+    });
+
+    test('classifies explicit readiness questions', () => {
+      const result = intentRouter.classify('Am I ready to vote?');
+      expect(result.intent).toBe('readiness');
+    });
+
     test('classifies timeline questions correctly', () => {
       const result = intentRouter.classify('Show me the election timeline');
       expect(result.intent).toBe('timeline');

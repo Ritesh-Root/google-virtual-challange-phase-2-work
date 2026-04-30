@@ -44,6 +44,12 @@ describe('ContextManager', () => {
       expect(slots.age).toBe(18);
     });
 
+    test('extracts age from "I am 22"', () => {
+      const { sessionId } = contextManager.getOrCreate();
+      const slots = contextManager.updateFromMessage(sessionId, 'I am 22 and already registered');
+      expect(slots.age).toBe(22);
+    });
+
     test('extracts state from message', () => {
       const { sessionId } = contextManager.getOrCreate();
       const slots = contextManager.updateFromMessage(sessionId, 'I live in Maharashtra');
@@ -66,6 +72,12 @@ describe('ContextManager', () => {
       const { sessionId } = contextManager.getOrCreate();
       const slots = contextManager.updateFromMessage(sessionId, 'I already have a voter ID');
       expect(slots.voterStatus).toBe('registered');
+    });
+
+    test('does not treat negated registration as registered', () => {
+      const { sessionId } = contextManager.getOrCreate();
+      const slots = contextManager.updateFromMessage(sessionId, 'I am 22 and not already registered in Kerala');
+      expect(slots.voterStatus).toBe('first_time');
     });
 
     test('detects NRI status', () => {
@@ -118,6 +130,21 @@ describe('ContextManager', () => {
     test('asks for voter status when registration intent', () => {
       const { sessionId } = contextManager.getOrCreate();
       const result = contextManager.getMissingSlotQuestion(sessionId, 'registration');
+      expect(result).not.toBeNull();
+      expect(result.slotName).toBe('voterStatus');
+    });
+
+    test('asks for age before readiness scoring', () => {
+      const { sessionId } = contextManager.getOrCreate();
+      const result = contextManager.getMissingSlotQuestion(sessionId, 'readiness');
+      expect(result).not.toBeNull();
+      expect(result.slotName).toBe('age');
+    });
+
+    test('asks for registration status before readiness scoring when age is known', () => {
+      const { sessionId } = contextManager.getOrCreate();
+      contextManager.updateFromMessage(sessionId, 'I am 22');
+      const result = contextManager.getMissingSlotQuestion(sessionId, 'readiness');
       expect(result).not.toBeNull();
       expect(result.slotName).toBe('voterStatus');
     });

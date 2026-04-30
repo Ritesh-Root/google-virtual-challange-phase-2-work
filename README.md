@@ -44,8 +44,8 @@
 │  └──────────────────┘    └──────────────────────────┘       │
 │           │                                                  │
 │  ┌────────▼───────────────────────────────────────────┐     │
-│  │ Knowledge Base │ Checklist Gen │ Calendar Service   │     │
-│  │ (Verified ECI) │ (Personalized)│ (Google Calendar)  │     │
+│  │ Knowledge Base │ Readiness     │ Calendar Service   │     │
+│  │ (Verified ECI) │ Score + Plan  │ (Google Calendar)  │     │
 │  └────────────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -63,6 +63,7 @@
 |---------|-------------|---------------|
 | 🤖 Intelligent Chat | Understands voter questions via hybrid NLU | **Gemini 2.5 Flash** |
 | 📋 Personalized Checklists | Step-by-step voter registration & preparation | Deterministic Engine |
+| ✅ Voter Readiness Score | 0-100 readiness score with blockers and next actions | Deterministic Engine |
 | 📅 Calendar Reminders | One-click Google Calendar event creation | **Google Calendar** |
 | 📍 Polling Booth Finder | Direct Google Maps search for nearest booth | **Google Maps** |
 | 🌐 Multilingual | English ↔ Hindi with Gemini translation | **Gemini 2.5 Flash** |
@@ -205,6 +206,7 @@ electionguide-ai/
 │   │   ├── contextManager.js     # Session + slot extraction
 │   │   ├── knowledgeService.js   # Knowledge base with indexed FAQ
 │   │   ├── checklistGenerator.js # Personalized action checklists
+│   │   ├── readinessAssessor.js  # 0-100 voter readiness score
 │   │   ├── calendarService.js    # Google Calendar deep links
 │   │   ├── safetyFilter.js       # 3-layer safety pipeline
 │   │   └── cacheService.js       # LRU response cache
@@ -237,7 +239,7 @@ electionguide-ai/
 
 ## 📊 Test Coverage
 
-- **222+ tests** across unit, integration, scenario, and frontend suites
+- **380+ tests** across unit, integration, scenario, and frontend suites
 - **90%+ statement coverage**, 80%+ branch coverage
 - Tests cover: security headers, injection patterns, accessibility, API contracts, error handling
 - No external API calls in tests (fully mocked Gemini)

@@ -24,6 +24,10 @@ class IntentRouter {
         [/\bremind/i, /\breminder/i, /\bcalendar\b/i, /\bnotif/i, /\balert me\b/i, /\badd.*date/i, /\bsave.*date/i],
       ],
       [
+        INTENTS.READINESS,
+        [/\breadiness\b/i, /\bready to vote\b/i, /\bam i ready\b/i, /\bprepared\b.*\bvote\b/i, /\bscore\b.*\bvote\b/i],
+      ],
+      [
         INTENTS.ELIGIBILITY,
         [
           /\b(eligible|eligib)\b/i,
@@ -46,6 +50,7 @@ class IntentRouter {
           /sign up.*vot/i,
           /how (to|do i).*vote\b/i,
           /\bapply.*voter\b/i,
+          /\bvoter checklist\b/i,
         ],
       ],
       [

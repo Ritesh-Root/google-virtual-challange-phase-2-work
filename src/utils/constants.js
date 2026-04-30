@@ -13,6 +13,7 @@ const INTENTS = Object.freeze({
   TIMELINE: 'timeline',
   VOTING_DAY: 'voting_day',
   DOCUMENTS: 'documents',
+  READINESS: 'readiness',
   FAQ: 'faq',
   CALENDAR: 'calendar',
   GREETING: 'greeting',

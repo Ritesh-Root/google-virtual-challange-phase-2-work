@@ -35,6 +35,54 @@ describe('Chat Routes', () => {
     expect(res.body.data.mapLink).toContain('google.com/maps');
   });
 
+  test('POST /api/v1/chat — returns deterministic voter readiness score', async () => {
+    const res = await request(app)
+      .post('/api/v1/chat')
+      .send({ message: 'I am 22, already registered in Kerala and election is in 30 days. Am I ready to vote?' })
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.widgets.readiness.score).toBeGreaterThanOrEqual(80);
+    expect(res.body.data.widgets.readiness.status).toBeDefined();
+    expect(res.body.data.answer_summary).toContain('/100');
+  });
+
+  test('POST /api/v1/chat — asks for readiness inputs before scoring', async () => {
+    const res = await request(app).post('/api/v1/chat').send({ message: 'Am I ready to vote?' }).expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.answer_summary).toContain('age');
+    expect(res.body.data.widgets).toBeUndefined();
+  });
+
+  test('POST /api/v1/chat — keeps negated registration out of ready status', async () => {
+    const res = await request(app)
+      .post('/api/v1/chat')
+      .send({
+        message: 'I am 22 and not already registered in Kerala and election is in 30 days. Am I ready to vote?',
+      })
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.widgets.readiness.score).toBeLessThan(85);
+    expect(res.body.data.widgets.readiness.blockers.join(' ')).toContain('Form 6');
+  });
+
+  test('POST /api/v1/chat — translates deterministic readiness responses', async () => {
+    const res = await request(app)
+      .post('/api/v1/chat')
+      .send({
+        message: 'I am 22, already registered in Kerala and election is in 30 days. Am I ready to vote?',
+        language: 'hi',
+      })
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.answer_summary).toContain('[Translated]');
+    expect(res.body.data.detailed_explanation).toContain('[Translated]');
+    expect(res.body.data.widgets.readiness.score).toBeGreaterThanOrEqual(80);
+  });
+
   test('POST /api/v1/chat — rejects empty message', async () => {
     const res = await request(app).post('/api/v1/chat').send({ message: '' }).expect(400);
 

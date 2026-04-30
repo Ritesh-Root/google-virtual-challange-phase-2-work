@@ -137,6 +137,11 @@ describe('Frontend HTML smoke tests', () => {
     });
   });
 
+  test('has voter readiness quick start action', () => {
+    expect(html).toContain('id="qs-readiness"');
+    expect(html).toContain('Check readiness');
+  });
+
   test('accessibility buttons have type="button"', () => {
     const a11yBtns = html.match(/<button[^>]*class="a11y-btn"[^>]*/g) || [];
     expect(a11yBtns.length).toBeGreaterThan(0);
@@ -314,6 +319,12 @@ describe('Frontend JS smoke tests', () => {
 
   test('chat.js handles loading states', () => {
     expect(chatJs).toContain('aria-busy');
+  });
+
+  test('chat.js renders voter readiness meter', () => {
+    expect(chatJs).toContain('readiness-meter');
+    expect(chatJs).toContain('widgets');
+    expect(chatJs).toContain('readinessWidget');
   });
 
   test('chat.js has focus management', () => {

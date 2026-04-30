@@ -172,6 +172,25 @@
       html += '<div class="message-summary">' + escapeHtml(data.answer_summary) + '</div>';
     }
 
+    // Deterministic voter readiness score
+    var readinessWidget = data.widgets && data.widgets.readiness;
+    if (readinessWidget && typeof readinessWidget.score === 'number') {
+      var readinessScore = Math.max(0, Math.min(100, Math.round(readinessWidget.score)));
+      html +=
+        '<div class="readiness-meter" aria-label="Voter readiness score ' +
+        readinessScore +
+        ' out of 100">' +
+        '<div class="readiness-meter-header"><span>Voter readiness</span><strong>' +
+        readinessScore +
+        '/100</strong></div>' +
+        '<div class="readiness-track"><div class="readiness-fill" style="width:' +
+        readinessScore +
+        '%"></div></div>' +
+        '<div class="readiness-status">' +
+        escapeHtml(readinessWidget.status || 'Readiness checked') +
+        '</div></div>';
+    }
+
     // Detailed explanation (expandable)
     if (data.detailed_explanation) {
       html +=
